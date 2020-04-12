@@ -10,8 +10,11 @@ Imports:
    tidyr,
    tidyselect,
    ggplot2,
-   moonBook
-Suggest: moonBook   
+   moonBook,
+   predict3d,
+   patchwork,
+   ggiraph,
+   survival
 Authors@R: person("Keon-Woong", "Moon", role = c("aut", "cre"),
                      email = "cardiomoon@gmail.com")
 URL: https://github.com/cardiomoon/webr2
