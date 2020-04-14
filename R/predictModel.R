@@ -91,7 +91,8 @@ makeNewData=function(model,length=100,by=NULL,type="response"){
 #' @param se logical Whether or not draw confidence interval
 #' @param by NULL or character optional name of factor variable
 #' @param type character type argument to be passed to predict.gam
-#' @param interactive logical If true,
+#' @param interactive logical If true, make a interactive plot
+#' @param ... further arguments to be passed to geom_point_interactive
 #' @export
 #' @importFrom ggplot2 ggplot aes_string geom_point geom_line geom_ribbon ylab facet_wrap xlab scale_x_continuous
 #' @importFrom purrr reduce
@@ -115,7 +116,7 @@ makeNewData=function(model,length=100,by=NULL,type="response"){
 #' predictModel(model,by=rx)
 #' predictModel(model,by=rx,type="link")
 #' }
-predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",interactive=FALSE){
+predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",interactive=FALSE,...){
      # select=NULL;point=TRUE;se=TRUE;type="response";interactive=FALSE
      byvar=NULL
      if(!missing(by)) byvar=as.character(substitute(by))
@@ -144,7 +145,7 @@ predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",in
           df1[[byvar]]=factor(df1[[byvar]])
           df[[byvar]]=factor(df[[byvar]])
      }
-     i=1
+     if(!is.null(select)) xvars2=xvars2[select]
      for(i in 1:length(xvars2)){
           if(is.null(fillvar)){
                p[[i]]<-ggplot(data=df1[df1$xvar==xvars2[i],])
@@ -155,20 +156,37 @@ predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",in
           if(is.numeric(df[[xvars2[i]]])){
 
                if(is.null(fillvar)){
+                   if(interactive){
                     p[[i]]<-p[[i]]+geom_line(aes_string(x=xvars2[i],y="fit"))
                     if(se) p[[i]]<-p[[i]]+
                          geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin"),
                                      fill="red",alpha=0.4)
-                    if(point) p[[i]]<-p[[i]]+
-                    geom_point_interactive(data=df,aes_string(x=xvars2[i],y=yvar,tooltip="tooltip",data_id="tooltip"))
+                   }
+                   if(point) p[[i]]<-p[[i]]+
+                    geom_point_interactive(data=df,aes_string(x=xvars2[i],y=yvar,tooltip="tooltip",data_id="tooltip"),...)
+                   if(!interactive){
+                       p[[i]]<-p[[i]]+geom_line(aes_string(x=xvars2[i],y="fit"))
+                       if(se) p[[i]]<-p[[i]]+
+                               geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin"),
+                                           fill="red",alpha=0.4)
+                   }
                } else{
+                   if(interactive){
                     p[[i]]<-p[[i]]+
                          geom_line(aes_string(x=xvars2[i],y="fit",color=fillvar))
 
                     if(se) p[[i]]<-p[[i]]+
                          geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin",fill=fillvar),alpha=0.4)
+                   }
                     if(point) p[[i]]<-p[[i]]+
-                         geom_point_interactive(data=df,aes_string(x=xvars2[i],y=yvar,color=fillvar,tooltip="tooltip",data_id="tooltip"))
+                         geom_point_interactive(data=df,aes_string(x=xvars2[i],y=yvar,color=fillvar,tooltip="tooltip",data_id="tooltip"),...)
+                    if(!interactive){
+                        p[[i]]<-p[[i]]+
+                            geom_line(aes_string(x=xvars2[i],y="fit",color=fillvar))
+
+                        if(se) p[[i]]<-p[[i]]+
+                                geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin",fill=fillvar),alpha=0.4)
+                    }
                }
           } else{
                p[[i]]<-p[[i]]+
