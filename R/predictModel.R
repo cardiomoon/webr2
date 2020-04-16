@@ -8,32 +8,25 @@
 #' @export
 #' @examples
 #' model=lm(mpg~wt+hp+am,data=mtcars)
-#' makeNewData(model)
-makeNewData=function(model,length=100,by=NULL,type="response"){
+#' makeNewData2(model)
+makeNewData2=function(model,length=100,by=NULL,type="response"){
 
-     # length=100;by="am";type="response"
+       # length=100;by=NULL;type="response"
      xvars=names(model$model)[-1]
      if(!is.null(by)) {
           xvars2=setdiff(xvars,by)
      } else{
           xvars2=xvars
      }
-
+     xvars
+     j=1
      for(j in 1:length(xvars)){
           result=list()
-
+          i=3
           for(i in 1:length(xvars)){
                x=model$model[[xvars[i]]]
 
-               if(is.factor(x)) {
-                    if(i==j) {
-                         result[[i]]=levels(x)
-                    } else if(xvars[i] %in% by){
-                         result[[i]]=levels(x)
-                    } else{
-                         result[[i]]=levels(x)[1]
-                    }
-               } else {  ## numeric
+               if(is.numeric(x)) {  ## numeric
 
                     if(xvars[i] %in% by){
                          result[[i]]=unique(x)
@@ -42,6 +35,24 @@ makeNewData=function(model,length=100,by=NULL,type="response"){
                     } else{
                          result[[i]]=mean(x,na.rm=TRUE)
                     }
+               } else {
+                   if(is.factor(x)){
+                   if(i==j) {
+                       result[[i]]=levels(x)
+                   } else if(xvars[i] %in% by){
+                       result[[i]]=levels(x)
+                   } else{
+                      result[[i]]=levels(x)[1]
+                   }
+                   } else{
+                       if(i==j) {
+                           result[[i]]=unique(x)
+                       } else if(xvars[i] %in% by){
+                           result[[i]]=unique(x)
+                       } else{
+                           result[[i]]=names(which.max(table(x)))
+                       }
+                   }
                }
           }
           result
@@ -92,6 +103,8 @@ makeNewData=function(model,length=100,by=NULL,type="response"){
 #' @param by NULL or character optional name of factor variable
 #' @param type character type argument to be passed to predict.gam
 #' @param interactive logical If true, make a interactive plot
+#' @param fillcolor character The fill color of geom_ribbon
+#' @param fillalpha numeric The alpha value of geom_ribbon
 #' @param ... further arguments to be passed to geom_point_interactive
 #' @export
 #' @importFrom ggplot2 ggplot aes_string geom_point geom_line geom_ribbon ylab facet_wrap xlab scale_x_continuous
@@ -100,7 +113,6 @@ makeNewData=function(model,length=100,by=NULL,type="response"){
 #' @importFrom patchwork patchworkGrob
 #' @examples
 #' model=lm(mpg~wt+hp+am,data=mtcars)
-#' predictModel(model)
 #' predictModel(model,interactive=TRUE)
 #' predictModel(model,by=am)
 #' predictModel(model,by=am,interactive=TRUE)
@@ -115,9 +127,10 @@ makeNewData=function(model,length=100,by=NULL,type="response"){
 #' predictModel(model)
 #' predictModel(model,by=rx)
 #' predictModel(model,by=rx,type="link")
+#' predictModel(model,type="link")
 #' }
-predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",interactive=FALSE,...){
-     # select=NULL;point=TRUE;se=TRUE;type="response";interactive=FALSE
+predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",interactive=FALSE,fillcolor="red",fillalpha=0.4,...){
+     #  select=NULL;point=TRUE;se=TRUE;type="response";interactive=FALSE;fillcolor="red";fillalpha=0.4
      byvar=NULL
      if(!missing(by)) byvar=as.character(substitute(by))
 
@@ -129,7 +142,7 @@ predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",in
      #      }
      #
      # }
-     df1=makeNewData(model,by=byvar,type=type)
+     df1=makeNewData2(model,by=byvar,type=type)
     df1
      xvars=names(model$model)[-1]
      xvars2=setdiff(xvars,byvar)
@@ -160,7 +173,7 @@ predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",in
                     p[[i]]<-p[[i]]+geom_line(aes_string(x=xvars2[i],y="fit"))
                     if(se) p[[i]]<-p[[i]]+
                          geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin"),
-                                     fill="red",alpha=0.4)
+                                     fill=fillcolor,alpha=fillalpha)
                    }
                    if(point) p[[i]]<-p[[i]]+
                     geom_point_interactive(data=df,aes_string(x=xvars2[i],y=yvar,tooltip="tooltip",data_id="tooltip"),...)
@@ -168,7 +181,7 @@ predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",in
                        p[[i]]<-p[[i]]+geom_line(aes_string(x=xvars2[i],y="fit"))
                        if(se) p[[i]]<-p[[i]]+
                                geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin"),
-                                           fill="red",alpha=0.4)
+                                           fill=fillcolor,alpha=fillalpha)
                    }
                } else{
                    if(interactive){
@@ -176,7 +189,7 @@ predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",in
                          geom_line(aes_string(x=xvars2[i],y="fit",color=fillvar))
 
                     if(se) p[[i]]<-p[[i]]+
-                         geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin",fill=fillvar),alpha=0.4)
+                         geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin",fill=fillvar),alpha=fillalpha)
                    }
                     if(point) p[[i]]<-p[[i]]+
                          geom_point_interactive(data=df,aes_string(x=xvars2[i],y=yvar,color=fillvar,tooltip="tooltip",data_id="tooltip"),...)
@@ -185,7 +198,7 @@ predictModel=function(model,select=NULL,point=TRUE,se=TRUE,by,type="response",in
                             geom_line(aes_string(x=xvars2[i],y="fit",color=fillvar))
 
                         if(se) p[[i]]<-p[[i]]+
-                                geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin",fill=fillvar),alpha=0.4)
+                                geom_ribbon(aes_string(x=xvars2[i],ymax="ymax",ymin="ymin",fill=fillvar),alpha=fillalpha)
                     }
                }
           } else{

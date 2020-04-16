@@ -11,7 +11,10 @@ predictModel(
   se = TRUE,
   by,
   type = "response",
-  interactive = FALSE
+  interactive = FALSE,
+  fillcolor = "red",
+  fillalpha = 0.4,
+  ...
 )
 }
 \arguments{
@@ -27,14 +30,19 @@ predictModel(
 
 \item{type}{character type argument to be passed to predict.gam}
 
-\item{interactive}{logical If true,}
+\item{interactive}{logical If true, make a interactive plot}
+
+\item{fillcolor}{character The fill color of geom_ribbon}
+
+\item{fillalpha}{numeric The alpha value of geom_ribbon}
+
+\item{...}{further arguments to be passed to geom_point_interactive}
 }
 \description{
 Draw a ggplot with an object of class gam
 }
 \examples{
 model=lm(mpg~wt+hp+am,data=mtcars)
-predictModel(model)
 predictModel(model,interactive=TRUE)
 predictModel(model,by=am)
 predictModel(model,by=am,interactive=TRUE)
@@ -49,5 +57,6 @@ model=glm(status~rx+age+nodes,data=colon,family=binomial)
 predictModel(model)
 predictModel(model,by=rx)
 predictModel(model,by=rx,type="link")
+predictModel(model,type="link")
 }
 }

@@ -14,7 +14,8 @@ Imports:
    predict3d,
    patchwork,
    ggiraph,
-   survival
+   survival,
+   mgcv
 Authors@R: person("Keon-Woong", "Moon", role = c("aut", "cre"),
                      email = "cardiomoon@gmail.com")
 URL: https://github.com/cardiomoon/webr2
