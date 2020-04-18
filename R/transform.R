@@ -195,6 +195,7 @@ i=3
 #' @param x An object of calss autoBN
 #' @param ... Further arguments to be passed to plot_autoBN
 #' @importFrom ggplot2 geom_pointrange geom_jitter
+#' @importFrom cowplot plot_grid
 #' @export
 #' @examples
 #' data(acs,package="moonBook")
@@ -205,6 +206,7 @@ i=3
 #' plot(result,add.gam=TRUE)
 #' plot(result,by=sex)
 #' plot(result,add.gam=TRUE,by=sex,select=1)
+#' plot(result,add.gam=TRUE,by=sex)
 #' data("autotrader",package="bestNormalize")
 #' autotrader$yearsold <- 2017 - autotrader$Year
 #' fit<- lm(price ~ mileage + yearsold+status, data = autotrader)
@@ -228,8 +230,8 @@ plot.autoBN=function(x,...){
 #' @export
 plot_autoBN=function(x,add.gam,show.point,by,select,...){
 
-     # add.gam=TRUE;show.point=TRUE;by=NULL;select=NULL
-     # byvar="sex"
+      # add.gam=TRUE;show.point=TRUE;by=NULL;select=NULL
+      # byvar="sex"
     byvar=NULL
     colorvar=NULL
     if(missing(add.gam)) add.gam=FALSE
@@ -301,7 +303,9 @@ plot_autoBN=function(x,add.gam,show.point,by,select,...){
 
 
     }
+
     if(!missing(select)) p=p[select]
-    reduce(p,`+`)
+    if(!is.null(byvar)&(add.gam)) cowplot::plot_grid(plotlist=p)
+    else  reduce(p,`+`)
 }
 

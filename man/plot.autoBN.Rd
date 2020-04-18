@@ -23,6 +23,7 @@ plot(result,select=1:2,fill="blue")
 plot(result,add.gam=TRUE)
 plot(result,by=sex)
 plot(result,add.gam=TRUE,by=sex,select=1)
+plot(result,add.gam=TRUE,by=sex)
 data("autotrader",package="bestNormalize")
 autotrader$yearsold <- 2017 - autotrader$Year
 fit<- lm(price ~ mileage + yearsold+status, data = autotrader)

@@ -14,6 +14,7 @@ Imports:
    predict3d,
    patchwork,
    ggiraph,
+   cowplot,
    survival,
    mgcv
 Authors@R: person("Keon-Woong", "Moon", role = c("aut", "cre"),
