@@ -1,205 +1,33 @@
-library(PredictABEL)
-data(ExampleData)
-# specify column number of the outcome variable
-cOutcome <- 2
-# specify column number of ID variable
-cID <- 1
-# specify column numbers of non-genetic predictors
-cNonGenPred <- c(3:10)
-# specify column numbers of non-genetic predictors that are categorical
-cNonGenPredCat <- c(6:8)
-# specify column numbers of genetic predictors
-cGenPred <- c(11,13:16)
-# specify column numbers of genetic predictors that are categorical
-cGenPredCat <- c(0)
-
-# fit logistic regression model
-riskmodel <- fitLogRegModel(data=ExampleData, cOutcome=cOutcome,
-                            cNonGenPreds=cNonGenPred, cNonGenPredsCat=cNonGenPredCat,
-                            cGenPreds=cGenPred, cGenPredsCat=cGenPredCat)
-
-
-predRisk <- predRisk(riskModel=riskmodel)
-str(predRisk)
-predRisk2<-predict(riskmodel,type="response")
-str(predRisk2)
-
-## ORmultivariate
-ORmultivariate(riskmodel)
-ORmultivariate
-
-# plotCalibration
-riskmodel <- ExampleModels()$riskModel2
-predRisk <- predRisk(riskmodel)
-rangeaxis <- c(0,1) 
-groups <- 10 
-plotCalibration(data=ExampleData, cOutcome=2, predRisk=predRisk, 
-                groups=groups, rangeaxis=rangeaxis)
-
-plotCalibration
-labels <- c("Without disease", "With disease")    
-
-# produce discrimination box plot     
-plotDiscriminationBox(data=ExampleData, cOutcome=cOutcome, predrisk=predRisk)
-boxplot(predRisk ~ ExampleData[, 2])
-
-
-
-
-# plotRiskscorePredrisk
-
-riskmodel2 <- ExampleModels()$riskModel2
-predRisk2 <- predRisk(riskmodel2)
-cGenPred <- c(11:16)
-
-head(ExampleData)
-# function to compute unweighted genetic risk scores
-riskScore2 <- riskScore(weights=riskmodel2, data=ExampleData, 
-                       cGenPreds=cGenPred, Type="unweighted")
-riskScore2[1:10]
-# specify range of x-axis
-rangexaxis <- c(0,12)   
-# specify range of y-axis
-rangeyaxis <- c(0,1)     
-# specify label of x-axis
-xlabel <- "Risk score"     
-# specify label of y-axis
-ylabel <- "Predicted risk" 
-# specify title for the plot
-plottitle <- "Risk score versus predicted risk"
-
-# produce risk score-predicted risk plot
-plotRiskscorePredrisk(data=ExampleData, riskScore=riskScore2, 
-                      predRisk=predRisk2, 
-                      plottitle=plottitle, xlabel=xlabel, ylabel=ylabel,
-                      rangexaxis=rangexaxis, 
-                      rangeyaxis=rangeyaxis)
-
-ggplot(data=NULL,aes(x=riskScore2,y=pred2))+
-    geom_point()+
-    stat_smooth(method="lm")+
-    theme_pubr()+
-    labs(x="Risk score",y="Predicted risk",
-         title="Risk score versus predicted risk")
-
-labels <- c("without genetic factors", "with genetic factors")
-
-# produce ROC curve
-plotROC(data=ExampleData, cOutcome=2, 
-        predrisk=cbind(pred1,pred2), labels=labels)
-
-plotROC
-require(multipleROC)
-y=ExampleData[[2]]
-x1=predRisk1
-x2=predRisk2
-df=data.frame(x1,x2,y)
-df
-str(df)
-require(pROC)
-require(moonBook)
-a=roc(y~x1,data=df)
-str(a)
-ggplot(data=NULL)+geom_line(aes(x=1-a$specificities,y=a$sensitivities))
-
-plot(a)
-b=roc(y~x2,data=df)
-getS3method("roc","formula")
-plot(b,add=TRUE)
-roc.test(a,b)
-a=multipleROC(y~x1,data=df)
-plot(a)
-b=multipleROC(y~x2,data=df)
-plot_ROC(list(a,b))
-
-# simulatedDataset
-
-ORfreq<-cbind(c(1.35,1.20,1.24,1.16), rep(1,4), c(.41,.29,.28,.51),rep(1,4))
-
-# specify the population disease risk
-popRisk <- 0.3
-# specify size of hypothetical population
-popSize <- 10000
-
-# Obtain the simulated dataset
-Data <- simulatedDataset(ORfreq=ORfreq, poprisk=popRisk, popsize=popSize)
-str(Data)
-plotROC(data=Data, cOutcome=4, predrisk=Data[,3])
-
-
+# library(PredictABEL)
 
 ### reclassification
-### 
-data(ExampleData)
-str(ExampleData)
-summary(ExampleData)
-names(ExampleData)[2]="AMD"
-
-form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
-form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
-fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
-fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-pred1=predict(fit1,type="response")
-pred2=predict(fit2,type="response")
-
-
-for(i in 6:8){
-ExampleData[[i]]=factor(ExampleData[[i]])
-}
-
-
-
-# specify column number of the outcome variable
-cOutcome <- 2
-
-
-
-# fit logistic regression models
-# all steps needed to construct a logistic regression model are written in a function
-# called 'ExampleModels', which is described on page 4-5
-ExampleModels
-riskmodel1 <- ExampleModels()$riskModel1
-riskmodel2 <- ExampleModels()$riskModel2
-
-# obtain predicted risks
-predRisk1 <- predRisk(riskmodel1)
-predRisk2 <- predRisk(riskmodel2)
-cutoff <- c(0,.10,.35,1)    
-
-# compute reclassification measures
-reclassification(data=ExampleData, cOutcome=cOutcome, 
-                 predrisk1=predRisk1, predrisk2=predRisk2, cutoff)
-
-
-### reclassification
-### 
-data(ExampleData)
-names(ExampleData)[2]="AMD"
-
-form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
-form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
-fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
-fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-pred1=predict(fit1,type="response")
-pred2=predict(fit2,type="response")
-reclassification(data=ExampleData, cOutcome=2, 
-                 predrisk1=pred1, predrisk2=pred2, cutoff <- c(0,.1,.35,1))
-
-ORmultivariate(fit1)
-ORmultivariate(fit2)
-calibrationPlot(y=ExampleData$AMD,pred2)
-boxPlot2(y=ExampleData$AMD,pred2)
-labels=cc("without genetic factors", "with genetic factors")
-predictPlot(list(pred1,pred2),labels=labels)
+# data(ExampleData)
+# names(ExampleData)[2]="AMD"
+#
+# form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
+# form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
+# fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
+# fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
+# pred1=predict(fit1,type="response")
+# pred2=predict(fit2,type="response")
+# reclassification(data=ExampleData, cOutcome=2,
+#                  predrisk1=pred1, predrisk2=pred2, cutoff <- c(0,.1,.35,1))
+#
+# ORmultivariate(fit1)
+# ORmultivariate(fit2)
+# calibrationPlot(y=ExampleData$AMD,pred2)
+# boxPlot2(y=ExampleData$AMD,pred2)
+# labels=cc("without genetic factors", "with genetic factors")
+# predictPlot(list(pred1,pred2),labels=labels)
 
 #' Draw a calibration plot
-#' @param y A numeric vector 
+#' @param y A numeric vector
 #' @param pred Numeric vecor as a result of predict.glm
 #' @param ... further arguments to be passed to geom_point()
 #' @importFrom Hisc::cut2
 #' @return A ggplot
 #' @export
-#' @examples 
+#' @examples
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
 #' pred2=predict(fit2,type="response")
@@ -218,9 +46,9 @@ calibrationPlot=function(y,pred,...){
     observed <- tapply(y, groep, sum)
     meanpred <- round(tapply(p, groep, mean), 3)
     meanobs <- round(tapply(y, groep, mean), 3)
-    matres <- cbind(total, meanpred, meanobs, predicted, 
+    matres <- cbind(total, meanpred, meanobs, predicted,
                     observed)
-    contr <- ((observed - predicted)^2)/(total * meanpred * 
+    contr <- ((observed - predicted)^2)/(total * meanpred *
                                              (1 - meanpred))
     chisqr <- sum(contr)
     df <- (groups - 2)
@@ -231,9 +59,9 @@ calibrationPlot=function(y,pred,...){
     }else {
         temp=paste0(temp,"== ", pval,")")
     }
-    
+
     df1=as.data.frame(matres)
-    
+
     ggplot(data=df1,aes(x=meanpred,y=meanobs))+
         geom_segment(x=0,y=0,xend=1,yend=1,color="grey50")+
         geom_point(...)+
@@ -246,12 +74,12 @@ calibrationPlot=function(y,pred,...){
 
 
 #' Draw a box plot
-#' @param y A numeric vector 
+#' @param y A numeric vector
 #' @param pred Numeric vecor as a result of predict.glm
 #' @param ... further arguments to be passed to geom_boxplot()
 #' @return A ggplot
 #' @export
-#' @examples 
+#' @examples
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
 #' pred2=predict(fit2,type="response")
@@ -278,7 +106,7 @@ boxPlot2=function(y,pred,labels,...){
 #' @param ... Further arguments to be passed to geom_line()
 #' @return A ggplot
 #' @export
-#' @examples 
+#' @examples
 #' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
@@ -288,7 +116,7 @@ boxPlot2=function(y,pred,labels,...){
 #' labels=cc("without genetic factors", "with genetic factors")
 #' predictPlot(list(pred1,pred2),labels=labels)
 predictPlot=function(predlist,labels,size,...){
-    count=length(predlist) 
+    count=length(predlist)
     if(missing(labels)) labels <- paste0("Model",1:count)
     if(missing(size)) size=1
     df<-map2_dfr(predlist,1:count,function(pred,i){
@@ -299,10 +127,10 @@ predictPlot=function(predlist,labels,size,...){
         df$no=i
         df
     })
-    
-    
+
+
     df$no=factor(df$no,labels=labels)
-    
+
     ggplot(data=df,aes(x=x,y=y,color=no,lty=no))+geom_line(size=size,...)+
         labs(x="Cumulative percentage",
              y="Predicted risks",
@@ -321,7 +149,7 @@ predictPlot=function(predlist,labels,size,...){
 #' @param xlab,yla,title character
 #' @param ... Further arguments to be passed to geom_point()
 #' @export
-#' @examples 
+#' @examples
 #' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
@@ -340,19 +168,19 @@ priorPosteriorPlot=function(pred1,pred2,xlab,ylab,title,...){
         xlim(c(0,1))+ylim(c(0,1))+theme_bw()+
         theme_bw(base_size = 14)+
         theme(panel.grid = element_blank())
-    
+
 }
 
 
 
 #' Risk Distribution Plot
-#' @param y A numeric vector 
+#' @param y A numeric vector
 #' @param pred Numeric vecor as a result of predict.glm
 #' @param labels Character
 #' @param ... further arguments to be passed to geom_col()
 #' @return A ggplot
 #' @export
-#' @examples 
+#' @examples
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
 #' pred2=predict(fit2,type="response")
@@ -364,7 +192,7 @@ riskDistributionPlot=function(y,pred,labels,...){
     df=as.data.frame(t(m))
     names(df)=c("x","no","Freq")
     df$x=as.numeric(gsub("\\(|,.*\\]","",df$x))
-    df<-df %>% group_by(no) %>% mutate(ratio=Freq/sum(Freq)) 
+    df<-df %>% group_by(no) %>% mutate(ratio=Freq/sum(Freq))
     df$no=factor(df$no,labels=labels)
     ggplot(df,aes(x=x,y=ratio,fill=no))+
         geom_col(position="dodge",...)+
@@ -398,7 +226,7 @@ plotROC2=function(data, cOutcome, predrisk, labels){
     auclabel=function(x){
         paste0("AUC: ",round(x$auc,3),"(",round(ci(x)[1],3),"-",round(ci(x)[3],3),")") }
     auclabels=c(auclabel(roc1),auclabel(roc2))
-    
+
     res=roc.test(roc1,roc2)
     delong="DeLong's test: "
     if(res$p.value<0.001) {
@@ -415,12 +243,12 @@ plotROC2=function(data, cOutcome, predrisk, labels){
 
 
 #' Draw ROC curves
-#' @param y A numeric vector 
+#' @param y A numeric vector
 #' @param predlist A list of numeric vecors as results of predict.glm
 #' @param labels Character
 #' @param ... further arguments to be passed to geom_line()
 #' @export
-#' @examples 
+#' @examples
 #' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
@@ -443,7 +271,7 @@ df<-predlist %>% map2_dfr(1:count,function(a,b){
 })
 
 auclabel=temp %>% map_chr(function(x){
-    paste0("AUC: ",round(x$auc,3),"(",round(ci(x)[1],3),"-",round(ci(x)[3],3),")")    
+    paste0("AUC: ",round(x$auc,3),"(",round(ci(x)[1],3),"-",round(ci(x)[3],3),")")
 })
 df2=data.frame(label=auclabel)
 df2$no=1:count
