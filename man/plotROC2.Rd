@@ -19,6 +19,12 @@ plotROC2(data, cOutcome, predrisk, labels)
 Draw ROC curves
 }
 \examples{
+form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
+form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
+fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
+fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
+pred1=predict(fit1,type="response")
+pred2=predict(fit2,type="response")
 labels <- c("without genetic factors", "with genetic factors")
 plotROC2(data=ExampleData, cOutcome=2, predrisk=cbind(pred1,pred2), labels=labels)
 }

@@ -143,6 +143,7 @@ calibrationPlot=function(y,pred,...){
 #' Draw a box plot
 #' @param y A numeric vector
 #' @param pred Numeric vecor as a result of predict.glm
+#' @param labels character optional labels
 #' @param ... further arguments to be passed to geom_boxplot()
 #' @importFrom ggplot2 geom_boxplot stat_summary
 #' @return A ggplot
@@ -171,7 +172,10 @@ boxPlot2=function(y,pred,labels,...){
 #' Draw a Predictiveness Plot
 #' @param predlist A list of prediction vectors
 #' @param labels String Optional labels
+#' @param size numeric line size
 #' @param ... Further arguments to be passed to geom_line()
+#' @importFrom purrr map2_dfr
+#' @importFrom ggplot2 element_rect
 #' @return A ggplot
 #' @export
 #' @examples
@@ -199,7 +203,7 @@ predictPlot=function(predlist,labels,size,...){
 
     df$no=factor(df$no,labels=labels)
 
-    ggplot(data=df,aes(x=x,y=y,color=no,lty=no))+geom_line(size=size,...)+
+    ggplot(data=df,aes_string(x="x",y="y",color="no",lty="no"))+geom_line(size=size,...)+
         labs(x="Cumulative percentage",
              y="Predicted risks",
              title="Predictiveness Curve")+
@@ -214,7 +218,7 @@ predictPlot=function(predlist,labels,size,...){
 #' Draw prior versus posterior plot
 #' @param pred1 Numeric vecor as a result of predict.glm
 #' @param pred2 Numeric vecor as a result of predict.glm
-#' @param xlab,yla,title character
+#' @param xlab,ylab,title character
 #' @param ... Further arguments to be passed to geom_point()
 #' @export
 #' @examples
@@ -246,6 +250,9 @@ priorPosteriorPlot=function(pred1,pred2,xlab,ylab,title,...){
 #' @param pred Numeric vecor as a result of predict.glm
 #' @param labels Character
 #' @param ... further arguments to be passed to geom_col()
+#' @importFrom dplyr group_by mutate
+#' @importFrom ggplot2 geom_col element_text element_rect
+#' @importFrom rlang .data
 #' @return A ggplot
 #' @export
 #' @examples
@@ -254,16 +261,19 @@ priorPosteriorPlot=function(pred1,pred2,xlab,ylab,title,...){
 #' pred2=predict(fit2,type="response")
 #' riskDistributionPlot(y=ExampleData$AMD,pred=pred2)
 riskDistributionPlot=function(y,pred,labels,...){
+        # y=ExampleData$AMD;pred=pred2
+        # labels=c("Without outcome", "With outcome")
     if(missing(labels)) labels=c("Without outcome", "With outcome")
 
     m <- table(y, cut(pred, seq(0,1.05, 0.05)))
     df=as.data.frame(t(m))
     names(df)=c("x","no","Freq")
     df$x=as.numeric(gsub("\\(|,.*\\]","",df$x))
-    df<-df %>% group_by(no) %>% mutate(ratio=Freq/sum(Freq))
+
+    df<-df %>% group_by(.data[["no"]]) %>% mutate(ratio=.data[["Freq"]]/sum(.data[["Freq"]]))
     df$no=factor(df$no,labels=labels)
-    ggplot(df,aes(x=x,y=ratio,fill=no))+
-        geom_col(position="dodge",...)+
+    ggplot(df,aes_string(x="x",y="ratio",fill="no"))+
+        geom_col(position="dodge")+
         labs(x="Predicted risk",y="Precentage",
              title="Distribution of Predicted Risk")+
         theme_bw()+
@@ -284,17 +294,26 @@ riskDistributionPlot=function(y,pred,labels,...){
 #' @param predrisk	Vector of predicted risk
 #' @param labels Labels given to the ROC curves.
 #' @importFrom PredictABEL plotROC
-#' @importFrom pROC roc.test
+#' @importFrom pROC roc.test roc ci
+#' @importFrom graphics text
 #' @export
 #' @examples
+#' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
+#' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
+#' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
+#' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
+#' pred1=predict(fit1,type="response")
+#' pred2=predict(fit2,type="response")
 #' labels <- c("without genetic factors", "with genetic factors")
 #' plotROC2(data=ExampleData, cOutcome=2, predrisk=cbind(pred1,pred2), labels=labels)
 plotROC2=function(data, cOutcome, predrisk, labels){
 
     if(missing(labels)) labels <- c("Model 1", "Model 2")
+    # data=ExampleData; cOutcome=2; predrisk=cbind(pred1,pred2); labels=labels
+
     plotROC(data=data, cOutcome=cOutcome, predrisk=predrisk, labels=labels)
-    roc1=roc(data[[cOutcome]],predrisk[1])
-    roc2=roc(data[[cOutcome]],predrisk[2])
+    roc1=roc(data[[cOutcome]],predrisk[,1])
+    roc2=roc(data[[cOutcome]],predrisk[,2])
     auclabel=function(x){
         paste0("AUC: ",round(x$auc,3),"(",round(ci(x)[1],3),"-",round(ci(x)[3],3),")") }
     auclabels=c(auclabel(roc1),auclabel(roc2))
@@ -319,6 +338,9 @@ plotROC2=function(data, cOutcome, predrisk, labels){
 #' @param predlist A list of numeric vecors as results of predict.glm
 #' @param labels Character
 #' @param ... further arguments to be passed to geom_line()
+#' @importFrom purrr map2_dfr map_chr
+#' @importFrom pROC roc ci
+#' @importFrom ggplot2 element_rect element_text
 #' @export
 #' @examples
 #' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
@@ -331,36 +353,36 @@ plotROC2=function(data, cOutcome, predrisk, labels){
 #' ggplotROC(ExampleData$AMD,predlist=list(pred1,pred2),labels=labels)
 ggplotROC=function(y,predlist,labels,...) {
 
-if(missing(labels)) labels <- c("Model 1", "Model 2")
+  if(missing(labels)) labels <- c("Model 1", "Model 2")
 
-count=length(predlist)
-temp=list()
-df<-predlist %>% map2_dfr(1:count,function(a,b){
+  count=length(predlist)
+  temp=list()
+  df<-predlist %>% map2_dfr(1:count,function(a,b){
     temp[[b]]<<-roc(y~a)
     df=data.frame(y=temp[[b]]$sensitivities,x=1-temp[[b]]$specificities)
     df$no=b
     df
-})
+  })
 
-auclabel=temp %>% map_chr(function(x){
+  auclabel=temp %>% map_chr(function(x){
     paste0("AUC: ",round(x$auc,3),"(",round(ci(x)[1],3),"-",round(ci(x)[3],3),")")
-})
-df2=data.frame(label=auclabel)
-df2$no=1:count
-df2$x=0.8
-df2$y=0.3-(df2$no/20)
-df2$no=factor(df2$no,labels=labels)
-res=roc.test(temp[[1]],temp[[2]])
+  })
+  df2=data.frame(label=auclabel)
+  df2$no=1:count
+  df2$x=0.8
+  df2$y=0.3-(df2$no/20)
+  df2$no=factor(df2$no,labels=labels)
+  res=roc.test(temp[[1]],temp[[2]])
 
-df$no=factor(df$no,labels=labels)
-delong="DeLong's test: "
-if(res$p.value<0.001) {
+  df$no=factor(df$no,labels=labels)
+  delong="DeLong's test: "
+  if(res$p.value<0.001) {
     delong=paste0(delong,"p < 0.001")
-} else {
+  } else {
     delong=paste0(delong,"p =", round(res$p.value,3))
-}
-p<-ggplot(data=df)+
-    geom_line(aes(x=x,y=y,color=no,group=no,lty=no),size=1,...)+
+  }
+  p<-ggplot(data=df)+
+    geom_line(aes_string(x="x",y="y",color="no",group="no",lty="no"),size=1,...)+
     labs(x="1-Specificity",y="Sensitivity",
          title="ROC plot")+
     geom_segment(x=0,y=0,xend=1,yend=1,color="grey50",lty=2)+
@@ -370,7 +392,7 @@ p<-ggplot(data=df)+
           legend.box.background = element_rect(),
           panel.grid = element_blank(),
           plot.title = element_text(hjust = 0.5))
-p+geom_text(data=df2,aes(x=x,y=y,label=label,color=no))+
+  p+geom_text(data=df2,aes_string(x="x",y="y",label="label",color="no"))+
     annotate("text",x=0.8,y=0.3,label=delong)
 }
 
@@ -384,6 +406,7 @@ p+geom_text(data=df2,aes(x=x,y=y,label=label,color=no))+
 #' @param cutoff Cutoff values for risk categories for initial model. Default value is c(0,.1,.35,1)
 #' @param cutoff2 Optional cutoff values for risk categories for updated model
 #' @importFrom Hmisc improveProb
+#' @importFrom stats pnorm
 #' @export
 #' @return A list of class reclassified with elements
 #' \item{cutoff}{Cutoff values for risk categories for initial model}
@@ -494,7 +517,10 @@ print.reclassified=function(x,...){
 #' @param outcome Character
 #' @param labels Optional character
 #' @importFrom officer fp_border
-#' @importFrom flextable as_flextable
+#' @importFrom flextable as_flextable align bold merge_v delete_part hline hline_top merge_at
+#' add_footer_row as_grouped_data width add_header_row colformat_num
+#' @importFrom dplyr select
+#' @importFrom tidyselect all_of
 #' @export
 #' @return An object of class flextable
 #' @examples
@@ -538,13 +564,14 @@ reclassTable=function(x,outcome,labels){
     df=rbind(a,b)
 
     colnames(df)[1:(length(x$cutoff2)-1)]=cutoff2str(x$cutoff2)
-    df$initial=rep(cutoff2str(x$cutoff),2)
+    df[["initial"]]=rep(cutoff2str(x$cutoff),2)
     names(df)[names(df)=="space"]=" "
     names(df)[names(df)=="space1"]="1"
-    str(df)
-    df<-df %>% select(initial,everything())
+    #str(df)
+    df<-df %>% select(all_of("initial"),everything())
     df<-as_grouped_data(df,groups=outcome)
     df
+
     ft<-as_flextable(df) %>% bold(j=1,i=~!is.na(outcome),bold=TRUE,part="body")
 
     ft<-merge_v(ft,j=c("inc","dec","nri"),part="body")
@@ -562,7 +589,7 @@ reclassTable=function(x,outcome,labels){
     values=c(labels[1],labels[2],"","Reclassified","","Net correctly reclassified(%)")
     colwidths=c(1,no,1,2,1,1)
     ft<-add_header_row(ft,values=values,colwidths=colwidths)
-    ft<-width(ft,j=2:4,width=1.2)
+    ft<-width(ft,j=2:4,width=1.4)
     big_border = fp_border(color="black", width = 2)
     small_border = fp_border(color="black", width = 1)
     ft<-hline_top(ft,part="body",border=big_border)
@@ -572,8 +599,8 @@ reclassTable=function(x,outcome,labels){
     ft
     ft<-merge_at(ft,i=1:2,j=9,part="header")
     ft<-merge_at(ft,i=1:2,j=1,part="header")
-    ft<-width(ft,j=6:7,width=1.1)
-    ft<-width(ft,j=9,width=0.5)
+    ft<-width(ft,j=6:7,width=1.2)
+    ft<-width(ft,j=9,width=0.6)
 
     y=x$NRIcat
     values=paste0("Net reclassification improvement :",round(y[1]*100,1),"% (95% CI :",
@@ -595,6 +622,7 @@ reclassTable=function(x,outcome,labels){
         values=paste0(values,"=", round(y[4],3))
     }
     ft<-add_footer_row(ft,top=FALSE,values=values,colwidths=9)
+    ft<-flextable::fontsize(ft,size=12,part="all")
     ft
 }
 

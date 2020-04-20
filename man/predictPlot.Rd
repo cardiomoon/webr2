@@ -11,6 +11,8 @@ predictPlot(predlist, labels, size, ...)
 
 \item{labels}{String Optional labels}
 
+\item{size}{numeric line size}
+
 \item{...}{Further arguments to be passed to geom_line()}
 }
 \value{

@@ -11,7 +11,7 @@ priorPosteriorPlot(pred1, pred2, xlab, ylab, title, ...)
 
 \item{pred2}{Numeric vecor as a result of predict.glm}
 
-\item{xlab, yla, title}{character}
+\item{xlab, ylab, title}{character}
 
 \item{...}{Further arguments to be passed to geom_point()}
 }

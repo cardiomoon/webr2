@@ -11,6 +11,8 @@ boxPlot2(y, pred, labels, ...)
 
 \item{pred}{Numeric vecor as a result of predict.glm}
 
+\item{labels}{character optional labels}
+
 \item{...}{further arguments to be passed to geom_boxplot()}
 }
 \value{
