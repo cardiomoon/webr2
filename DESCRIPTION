@@ -16,7 +16,13 @@ Imports:
    ggiraph,
    cowplot,
    survival,
-   mgcv
+   mgcv,
+   Hmisc,
+   PredictABEL,
+   flextable,
+   officer,
+   methods,
+   pROC
 Authors@R: person("Keon-Woong", "Moon", role = c("aut", "cre"),
                      email = "cardiomoon@gmail.com")
 URL: https://github.com/cardiomoon/webr2
