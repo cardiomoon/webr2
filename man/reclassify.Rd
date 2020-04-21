@@ -15,6 +15,7 @@ reclassify(fit1, fit2, cutoff, cutoff2)
 }
 \value{
 A list of class reclassified with elements
+\describe{
 \item{cutoff}{Cutoff values for risk categories for initial model}
 \item{cutoff2}{Cutoff values for risk categories for updated model}
 \item{absent}{summary table for absent outcome}
@@ -25,6 +26,7 @@ A list of class reclassified with elements
 \item{NRIcat}{Numeric vector for Net reclassification improvement, categorical}
 \item{NRIcont}{Numeric vector for Net reclassification improvement, continuous}
 \item{IDI}{Numeric vector for Integrated discrimination improvement}
+}
 }
 \description{
 Function for reclassification table and statistics

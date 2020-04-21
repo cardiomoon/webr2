@@ -21,5 +21,6 @@ form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
 form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-data=makePPTList_reclassfy(fit1,fit2)
+labels=c("Without Genetic Factor","With Genetic Factor")
+data=makePPTList_reclassfy(fit1,fit2,labels=labels)
 }

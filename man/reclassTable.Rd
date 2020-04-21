@@ -2,7 +2,7 @@
 % Please edit documentation in R/reclassify.R
 \name{reclassTable}
 \alias{reclassTable}
-\title{Make recalssification table}
+\title{Make reclassification table}
 \usage{
 reclassTable(x, outcome, labels)
 }
@@ -17,13 +17,13 @@ reclassTable(x, outcome, labels)
 An object of class flextable
 }
 \description{
-Make recalssification table
+Make reclassification table
 }
 \examples{
 form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
 form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-result=reclassify(fit1,fit2)
-reclassTable(result)
+x=reclassify(fit1,fit2,cutoff=c(0,0.1,0.3,0.5,1))
+reclassTable(x)
 }

@@ -8,21 +8,29 @@
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' data=makePPTList_reclassfy(fit1,fit2)
+#' labels=c("Without Genetic Factor","With Genetic Factor")
+#' data=makePPTList_reclassfy(fit1,fit2,labels=labels)
 makePPTList_reclassfy=function(fit1,fit2,labels,cutoff=c(0,.1,.35,1),cutoff2){
+
+  # cutoff=c(0,.1,.35,1)
+  if(missing(labels)) labels=c("Initial Model","Updated Model")
+  if(missing(cutoff2)) cutoff2=cutoff
+
   type=c("Rcode","Rcode","Rcode","table",rep("ggplot",5),"plot")
-  title=c("Initial Model","Updated Model","Reclassfication",
-          "Reclassfication Table",
+  title=c(labels[1],labels[2],
+          "Reclassfication","Reclassfication Table",
           "Calibration Plot","Boxplot","predictPlot","priorPosteriorPlot",
           "riskDistributionPlot","ROC plot")
-  if(missing(cutoff2)) cutoff2=cutoff
 
   temp=paste0("result<-reclassify(fit1,fit2, cutoff=",paste0("c(",paste0(cutoff,collapse=","),")"),
               ",cutoff2=",paste0("c(",paste0(cutoff,collapse=","),")"),");result")
-  code=c("ORmultivariate(fit1)","ORmultivariate(fit2)",temp,
-         "reclassTable(result)","calibrationPlot(fit2)","boxPlot2(fit2)",
-         "predictPlot(list(fit1,fit2))","priorPosteriorPlot(list(fit1,fit2),alpha=0.3,color='red')",
-         "riskDistributionPlot(fit2)","plotROC2(fit1,fit2)")
+  code=c("ORmultivariate(fit1)","ORmultivariate(fit2)",
+         temp,paste0("reclassTable(result,labels=c('",paste0(labels,collapse="','"),"'))"),
+         "calibrationPlot(fit2)","boxPlot2(fit2)",
+         paste0("predictPlot(list(fit1,fit2),labels=c('",paste0(labels,collapse="','"),"'))"),
+         "priorPosteriorPlot(list(fit1,fit2),alpha=0.3,color='red')",
+         "riskDistributionPlot(fit2)",
+         paste0("plotROC2(fit1,fit2,labels=c('",paste0(labels,collapse="','"),"'))"))
   data.frame(title=title,type=type,code=code,stringsAsFactors = FALSE)
 
 }
@@ -337,76 +345,6 @@ plotROC2=function(fit1,fit2,labels){
 
 
 
-#' Draw ROC curves
-#' @param fit1,fit2 An object of class glm
-#' @param labels Character
-#' @param ... further arguments to be passed to geom_line()
-#' @importFrom purrr map2_dfr map_chr
-#' @importFrom pROC roc ci
-#' @importFrom ggplot2 element_rect element_text
-#' @export
-#' @examples
-#' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
-#' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
-#' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
-#' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' labels <- c("without genetic factors", "with genetic factors")
-#' ggplotROC(fit1,fit2,labels=labels)
-ggplotROC=function(fit1,fit2,labels,...) {
-
-  if(missing(labels)) labels <- c("Model 1", "Model 2")
-
-  data=fit1$data
-  y=fit1$y
-  cOutcome=which(names(fit1$data)==names(fit1$model)[1])
-  pred1=predict(fit1,type="response")
-  pred2=predict(fit2,type="response")
-  predlist=list(pred1,pred2)
-  count=length(predlist)
-  temp=list()
-  df<-predlist %>% map2_dfr(1:count,function(a,b){
-    temp[[b]]<<-roc(y~a)
-    df=data.frame(y=temp[[b]]$sensitivities,x=1-temp[[b]]$specificities)
-    df$no=b
-    df
-  })
-
-  auclabel=temp %>% map_chr(function(x){
-      paste0("AUC: ",sprintf("%4.3f",x$auc),"(",sprintf("%4.3f",ci(x)[1]),"-",sprintf("%4.3f",ci(x)[3]),")")
-  })
-  df2=data.frame(label=auclabel)
-  df2$no=1:count
-  df2$x=0.8
-  df2$y=0.3-(df2$no/20)
-  df2$no=factor(df2$no,labels=labels)
-  res=roc.test(temp[[1]],temp[[2]])
-
-  df$no=factor(df$no,labels=labels)
-  delong="DeLong's test: "
-  if(res$p.value<0.001) {
-    delong=paste0(delong,"p < 0.001")
-  } else {
-    delong=paste0(delong,"p =", round(res$p.value,3))
-  }
-  p<-ggplot(data=df)+
-    geom_line(aes_string(x="x",y="y",color="no",group="no",lty="no"),size=1,...)+
-    labs(x="1-Specificity",y="Sensitivity",
-         title="ROC plot")+
-    geom_segment(x=0,y=0,xend=1,yend=1,color="grey50",lty=2)+
-    theme_bw()+
-    theme(legend.position=c(0.8,0.1),
-          legend.title = element_blank(),
-          legend.box.background = element_rect(),
-          panel.grid = element_blank(),
-          plot.title = element_text(hjust = 0.5))
-  p+geom_text(data=df2,aes_string(x="x",y="y",label="label",color="no"))+
-    annotate("text",x=0.8,y=0.3,label=delong)
-}
-
-
-
-
-
 #' Function for reclassification table and statistics
 #' @param fit1,fit2 An object of class glm
 #' @param cutoff Cutoff values for risk categories for initial model. Default value is c(0,.1,.35,1)
@@ -415,6 +353,7 @@ ggplotROC=function(fit1,fit2,labels,...) {
 #' @importFrom stats pnorm
 #' @export
 #' @return A list of class reclassified with elements
+#' \describe{
 #' \item{cutoff}{Cutoff values for risk categories for initial model}
 #' \item{cutoff2}{Cutoff values for risk categories for updated model}
 #' \item{absent}{summary table for absent outcome}
@@ -425,6 +364,7 @@ ggplotROC=function(fit1,fit2,labels,...) {
 #' \item{NRIcat}{Numeric vector for Net reclassification improvement, categorical}
 #' \item{NRIcont}{Numeric vector for Net reclassification improvement, continuous}
 #' \item{IDI}{Numeric vector for Integrated discrimination improvement}
+#' }
 #' @examples
 #' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
@@ -520,13 +460,13 @@ print.reclassified=function(x,...){
 }
 
 
-#' Make recalssification table
+#' Make reclassification table
 #' @param x An object of class reclassified
 #' @param outcome Character
 #' @param labels Optional character
 #' @importFrom officer fp_border
 #' @importFrom flextable as_flextable align bold merge_v delete_part hline hline_top merge_at
-#' add_footer_row as_grouped_data width add_header_row colformat_num
+#' add_footer_row as_grouped_data width add_header_row colformat_num hline_bottom
 #' @importFrom dplyr select
 #' @importFrom tidyselect all_of
 #' @export
@@ -536,14 +476,14 @@ print.reclassified=function(x,...){
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' result=reclassify(fit1,fit2)
-#' reclassTable(result)
+#' x=reclassify(fit1,fit2,cutoff=c(0,0.1,0.3,0.5,1))
+#' reclassTable(x)
 reclassTable=function(x,outcome,labels){
     if(missing(outcome)) outcome="outcome"
     if(missing(labels)) labels=c("Initial Model","Updated Model")
 
-    # outcome="outcome"
-    # labels=c("Initial Model","Updated Model")
+     # outcome="outcome"
+     # labels=c("Initial Model","Updated Model")
 
     a=x$absent[,-ncol(x$absent)]
     no=ncol(a)
@@ -551,10 +491,10 @@ reclassTable=function(x,outcome,labels){
     dec=sum(a[lower.tri(a)])
     a=as.data.frame(a)
     a$space=""
-    a$inc=inc
-    a$dec=dec
+    a$inc=c(NA,inc,rep(NA,no-2))
+    a$dec=c(NA,dec,rep(NA,no-2))
     a$space1=""
-    a$nri=x$x$nri.ne*100
+    a$nri=c(NA,x$x$nri.ne*100,rep(NA,no-2))
     a[[outcome]]="Absent"
     a
     b=x$present[,-ncol(x$present)]
@@ -562,12 +502,13 @@ reclassTable=function(x,outcome,labels){
     dec=sum(b[lower.tri(b)])
     b=as.data.frame(b)
     b$space=""
-    b$inc=inc
-    b$dec=dec
+    b$inc=c(NA,inc,rep(NA,no-2))
+    b$dec=c(NA,dec,rep(NA,no-2))
     b$space1=""
-    b$nri=x$x$nri.e*100
+    b$nri=c(NA,x$x$nri.e*100,rep(NA,no-2))
     b[[outcome]]="Present"
     df=rbind(a,b)
+    x$cutoff2
 
     colnames(df)[1:(length(x$cutoff2)-1)]=cutoff2str(x$cutoff2)
     df[["initial"]]=rep(cutoff2str(x$cutoff),2)
@@ -580,33 +521,35 @@ reclassTable=function(x,outcome,labels){
 
     ft<-as_flextable(df) %>% bold(j=1,i=~!is.na(outcome),bold=TRUE,part="body")
 
-    ft<-merge_v(ft,j=c("inc","dec","nri"),part="body")
 
     ft<-delete_part(ft,part="header")
     j=c(cutoff2str(x$cutoff2),"inc","dec")
-    ft<-colformat_num(ft,j=j,big.mark=",",digits=0)
-    ft<-colformat_num(ft,j="nri",big.mark=",",digits=1)
+    ft<-colformat_num(ft,j=j,big.mark=",",digits=0,na_str="")
+    ft<-colformat_num(ft,j="nri",big.mark=",",digits=1,na_str="")
 
-    ft<-width(ft,j=5,width=0.1)
-    ft<-width(ft,j=8,width=0.1)
+    space=no+2
+    space1=no+5
+    ft<-width(ft,j=space,width=0.1)
+    ft<-width(ft,j=space1,width=0.1)
     values=c("",cutoff2str(x$cutoff2),"","Increased risk","Decreased risk","","")
     ft<-add_header_row(ft,values=values)
-    ft
+    big_border = fp_border(color="black", width = 2)
+    small_border = fp_border(color="black", width = 1)
+    ft<-hline_bottom(ft,border=big_border,part="header")
     values=c(labels[1],labels[2],"","Reclassified","","Net correctly reclassified(%)")
     colwidths=c(1,no,1,2,1,1)
     ft<-add_header_row(ft,values=values,colwidths=colwidths)
-    ft<-width(ft,j=2:4,width=1.4)
-    big_border = fp_border(color="black", width = 2)
-    small_border = fp_border(color="black", width = 1)
+    ft<-width(ft,j=2:(no+1),width=1.4)
+
     ft<-hline_top(ft,part="body",border=big_border)
-    ft<-hline(ft,i=1,j=2:4,part="header",border=small_border)
-    ft<-hline(ft,i=1,j=6:7,part="header",border=small_border)
+    ft<-hline(ft,i=1,j=2:(no+1),part="header",border=small_border)
+    ft<-hline(ft,i=1,j=(no+3):(no+4),part="header",border=small_border)
     ft<-hline_top(ft,part="header",border=big_border)
     ft
-    ft<-merge_at(ft,i=1:2,j=9,part="header")
+    ft<-merge_at(ft,i=1:2,j=space1+1,part="header")
     ft<-merge_at(ft,i=1:2,j=1,part="header")
-    ft<-width(ft,j=6:7,width=1.2)
-    ft<-width(ft,j=9,width=0.6)
+    ft<-width(ft,j=(space+1):(space+2),width=1.2)
+    ft<-width(ft,j=space1+1,width=0.6)
 
     y=x$NRIcat
     values=paste0("Net reclassification improvement :",round(y[1]*100,1),"% (95% CI :",
@@ -617,7 +560,7 @@ reclassTable=function(x,outcome,labels){
     } else {
         values=paste0(values,"=", round(y[4],3))
     }
-    ft<-add_footer_row(ft,values=values,colwidths=9)
+    ft<-add_footer_row(ft,values=values,colwidths=space1+1)
     ft<-align(ft,align="center",part="header")
     y=x$IDI
     values=paste0("Integrated discrimination improvement :",round(y[1]*100,1),"% (95% CI :",
@@ -627,8 +570,10 @@ reclassTable=function(x,outcome,labels){
     } else {
         values=paste0(values,"=", round(y[4],3))
     }
-    ft<-add_footer_row(ft,top=FALSE,values=values,colwidths=9)
+    ft<-add_footer_row(ft,top=FALSE,values=values,colwidths=space1+1)
     ft<-flextable::fontsize(ft,size=12,part="all")
+    ft<-hline(ft,i=1,j=1,part="header",border=big_border)
+    ft<-hline(ft,i=1,j=space1+1,part="header",border=big_border)
     ft
 }
 
@@ -637,9 +582,9 @@ reclassTable=function(x,outcome,labels){
 #' @param cutoff Numeric vector
 #' @export
 #' @examples
-#' cutoff2str(cutoff=c(0,.1,.35,1))
+#' cutoff2str(cutoff=c(0,.1,.2,.5,1))
 cutoff2str=function(cutoff=c(0,.1,.35,1)){
-    cutoff=c(0,.1,.35,1)
+    # cutoff=c(0,.1,.35,1)
     no=length(cutoff)
     cutoff=cutoff*100
     temp=paste0("< ",cutoff[2])

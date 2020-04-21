@@ -13,5 +13,5 @@ cutoff2str(cutoff = c(0, 0.1, 0.35, 1))
 Convert cutoff to string
 }
 \examples{
-cutoff2str(cutoff=c(0,.1,.35,1))
+cutoff2str(cutoff=c(0,.1,.2,.5,1))
 }
