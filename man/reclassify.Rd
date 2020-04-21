@@ -4,12 +4,10 @@
 \alias{reclassify}
 \title{Function for reclassification table and statistics}
 \usage{
-reclassify(y, pred1, pred2, cutoff, cutoff2)
+reclassify(fit1, fit2, cutoff, cutoff2)
 }
 \arguments{
-\item{y}{A numeric vector of outcome}
-
-\item{pred1, pred2}{A numeric vector as a result of predict.glm}
+\item{fit1, fit2}{An object of class glm}
 
 \item{cutoff}{Cutoff values for risk categories for initial model. Default value is c(0,.1,.35,1)}
 
@@ -36,8 +34,6 @@ form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
 form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-pred1=predict(fit1,type="response")
-pred2=predict(fit2,type="response")
-result=reclassify(ExampleData$AMD,pred1,pred2)
+result=reclassify(fit1,fit2)
 result
 }

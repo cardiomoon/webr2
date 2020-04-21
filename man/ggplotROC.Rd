@@ -4,12 +4,10 @@
 \alias{ggplotROC}
 \title{Draw ROC curves}
 \usage{
-ggplotROC(y, predlist, labels, ...)
+ggplotROC(fit1, fit2, labels, ...)
 }
 \arguments{
-\item{y}{A numeric vector}
-
-\item{predlist}{A list of numeric vecors as results of predict.glm}
+\item{fit1, fit2}{An object of class glm}
 
 \item{labels}{Character}
 
@@ -23,8 +21,6 @@ form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
 form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-pred1=predict(fit1,type="response")
-pred2=predict(fit2,type="response")
 labels <- c("without genetic factors", "with genetic factors")
-ggplotROC(ExampleData$AMD,predlist=list(pred1,pred2),labels=labels)
+ggplotROC(fit1,fit2,labels=labels)
 }

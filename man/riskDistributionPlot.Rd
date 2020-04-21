@@ -4,12 +4,10 @@
 \alias{riskDistributionPlot}
 \title{Risk Distribution Plot}
 \usage{
-riskDistributionPlot(y, pred, labels, ...)
+riskDistributionPlot(fit, labels, ...)
 }
 \arguments{
-\item{y}{A numeric vector}
-
-\item{pred}{Numeric vecor as a result of predict.glm}
+\item{fit}{An object of clas glm}
 
 \item{labels}{Character}
 
@@ -24,6 +22,5 @@ Risk Distribution Plot
 \examples{
 form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-pred2=predict(fit2,type="response")
-riskDistributionPlot(y=ExampleData$AMD,pred=pred2)
+riskDistributionPlot(fit2)
 }

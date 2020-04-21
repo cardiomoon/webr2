@@ -1,34 +1,32 @@
-# library(PredictABEL)
-#
-# ### reclassification
-# data(ExampleData)
-# names(ExampleData)[2]="AMD"
-# usethis::use_data(ExampleData)
-#
-# form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
-# form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
-# fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
-# fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-# pred1=predict(fit1,type="response")
-# pred2=predict(fit2,type="response")
-#
-#
-#
-# require(ggplot2)
-# require(purrr)
-# require(dplyr)
-# require(pROC)
-# calibrationPlot(y=ExampleData$AMD,pred2)
-# boxPlot2(y=ExampleData$AMD,pred2)
-# labels=c("without genetic factors", "with genetic factors")
-# predictPlot(list(pred1,pred2),labels=labels)
-# priorPosteriorPlot(pred1,pred2,alpha=0.3,color="red")
-# riskDistributionPlot(y=ExampleData$AMD,pred=pred2)
-# labels <- c("without genetic factors", "with genetic factors")
-# plotROC2(data=ExampleData, cOutcome=2, predrisk=cbind(pred1,pred2), labels=labels)
-# plotROC2(data=ExampleData, cOutcome=2, predrisk=cbind(pred1,pred2))
-# reclassification(data=ExampleData, cOutcome=2,
-#                  predrisk1=pred1, predrisk2=pred2, cutoff <- c(0,.1,.35,1))
+#' Make Powerpoint list for reclassification
+#' @param fit1,fit2 An object of class glm
+#' @param labels Optioanl labels for initial model and updated model
+#' @param cutoff,cutoff2 A numeric vector Cutoff values for risk categories for initial and updated model
+#' @export
+#' @examples
+#' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
+#' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
+#' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
+#' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
+#' data=makePPTList_reclassfy(fit1,fit2)
+makePPTList_reclassfy=function(fit1,fit2,labels,cutoff=c(0,.1,.35,1),cutoff2){
+  type=c("Rcode","Rcode","Rcode","table",rep("ggplot",5),"plot")
+  title=c("Initial Model","Updated Model","Reclassfication",
+          "Reclassfication Table",
+          "Calibration Plot","Boxplot","predictPlot","priorPosteriorPlot",
+          "riskDistributionPlot","ROC plot")
+  if(missing(cutoff2)) cutoff2=cutoff
+
+  temp=paste0("result<-reclassify(fit1,fit2, cutoff=",paste0("c(",paste0(cutoff,collapse=","),")"),
+              ",cutoff2=",paste0("c(",paste0(cutoff,collapse=","),")"),");result")
+  code=c("ORmultivariate(fit1)","ORmultivariate(fit2)",temp,
+         "reclassTable(result)","calibrationPlot(fit2)","boxPlot2(fit2)",
+         "predictPlot(list(fit1,fit2))","priorPosteriorPlot(list(fit1,fit2),alpha=0.3,color='red')",
+         "riskDistributionPlot(fit2)","plotROC2(fit1,fit2)")
+  data.frame(title=title,type=type,code=code,stringsAsFactors = FALSE)
+
+}
+
 
 
 #'A hypothetical dataset that is used to demonstrate all functions.
@@ -51,6 +49,13 @@
 #' \item{Brier_Score}{Brier score}
 #' \item{Nagelkerke_Index}{Nagelkerke's R2 value}
 #'}
+#'@examples
+#' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
+#' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
+#' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
+#' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
+#' ORmultivariate(fit1)
+#' ORmultivariate(fit2)
 #'@references
 #'Suman Kundu, Yurii S. Aulchenko and A. Cecile J.W. Janssens (2020). PredictABEL: Assessment of Risk Prediction Models. R package version 1.2-4.https://CRAN.R-project.org/package=PredictABEL
 #'Brier GW. Verification of forecasts expressed in terms of probability. Monthly weather review 1950;78:1-3.
@@ -86,8 +91,7 @@ ORmultivariate=function (fit)
 
 
 #' Draw a calibration plot
-#' @param y A numeric vector
-#' @param pred Numeric vecor as a result of predict.glm
+#' @param fit An object of class glm
 #' @param ... further arguments to be passed to geom_point()
 #' @importFrom Hmisc cut2
 #' @importFrom ggplot2 geom_segment xlim ylim
@@ -97,10 +101,11 @@ ORmultivariate=function (fit)
 #' @examples
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' pred2=predict(fit2,type="response")
-#' calibrationPlot(y=ExampleData$AMD,pred2)
-calibrationPlot=function(y,pred,...){
+#' calibrationPlot(fit2)
+calibrationPlot=function(fit,...){
 
+    y<-fit$y
+    pred<-predict(fit,type="response")
     groups=10
     p<-pred
     matres <- matrix(NA, nrow = groups, ncol = 5)
@@ -141,8 +146,7 @@ calibrationPlot=function(y,pred,...){
 
 
 #' Draw a box plot
-#' @param y A numeric vector
-#' @param pred Numeric vecor as a result of predict.glm
+#' @param fit An object of class glm
 #' @param labels character optional labels
 #' @param ... further arguments to be passed to geom_boxplot()
 #' @importFrom ggplot2 geom_boxplot stat_summary
@@ -151,9 +155,10 @@ calibrationPlot=function(y,pred,...){
 #' @examples
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' pred2=predict(fit2,type="response")
-#' boxPlot2(y=ExampleData$AMD,pred=pred2)
-boxPlot2=function(y,pred,labels,...){
+#' boxPlot2(fit2)
+boxPlot2=function(fit,labels,...){
+    y<-fit$y
+    pred<-predict(fit,type="response")
     if(missing(labels)) labels=c("Without disease", "With disease")
     df=data.frame(y=pred,x=y)
     meandiff=mean(df$y[df$x==unique(df$x)[2]])-mean(df$y[df$x==unique(df$x)[1]])
@@ -170,11 +175,11 @@ boxPlot2=function(y,pred,labels,...){
 
 
 #' Draw a Predictiveness Plot
-#' @param predlist A list of prediction vectors
+#' @param fitlist A list of objects of class glm
 #' @param labels String Optional labels
 #' @param size numeric line size
 #' @param ... Further arguments to be passed to geom_line()
-#' @importFrom purrr map2_dfr
+#' @importFrom purrr map2_dfr map
 #' @importFrom ggplot2 element_rect
 #' @return A ggplot
 #' @export
@@ -183,12 +188,12 @@ boxPlot2=function(y,pred,labels,...){
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' pred1=predict(fit1,type="response")
-#' pred2=predict(fit2,type="response")
 #' labels=c("without genetic factors", "with genetic factors")
-#' predictPlot(list(pred1,pred2),labels=labels)
-predictPlot=function(predlist,labels,size,...){
-    count=length(predlist)
+#' predictPlot(list(fit1,fit2),labels=labels)
+predictPlot=function(fitlist,labels,size,...){
+  if(missing(labels)) labels=c("Initial Model","Updated Model")
+  predlist=map(fitlist,~predict(.x,type="response"))
+  count=length(predlist)
     if(missing(labels)) labels <- paste0("Model",1:count)
     if(missing(size)) size=1
     df<-map2_dfr(predlist,1:count,function(pred,i){
@@ -216,8 +221,7 @@ predictPlot=function(predlist,labels,size,...){
 
 
 #' Draw prior versus posterior plot
-#' @param pred1 Numeric vecor as a result of predict.glm
-#' @param pred2 Numeric vecor as a result of predict.glm
+#' @param fitlist A list of objects of class glm
 #' @param xlab,ylab,title character
 #' @param ... Further arguments to be passed to geom_point()
 #' @export
@@ -226,16 +230,16 @@ predictPlot=function(predlist,labels,size,...){
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' pred1=predict(fit1,type="response")
-#' pred2=predict(fit2,type="response")
-#' priorPosteriorPlot(pred1,pred2,alpha=0.3,color="red")
-priorPosteriorPlot=function(pred1,pred2,xlab,ylab,title,...){
+#' priorPosteriorPlot(list(fit1,fit2),alpha=0.3,color="red")
+priorPosteriorPlot=function(fitlist,xlab,ylab,title,...){
     if(missing(xlab)) xlab="Prior Risk"
     if(missing(ylab)) ylab="Posterior Risk"
     if(missing(title)) title="Prior versus Posterior Risk"
+
+    predlist=map(fitlist,~predict(.x,type="response"))
     ggplot(data=NULL)+
+        geom_point(aes(x=predlist[[1]],y=predlist[[2]]),...)+
         geom_segment(aes(x=0,y=0,xend=1,yend=1),color="black")+
-        geom_point(aes(x=pred1,y=pred2),...)+
         labs(x=xlab,y=ylab,title=title)+
         xlim(c(0,1))+ylim(c(0,1))+theme_bw()+
         theme_bw(base_size = 14)+
@@ -246,8 +250,7 @@ priorPosteriorPlot=function(pred1,pred2,xlab,ylab,title,...){
 
 
 #' Risk Distribution Plot
-#' @param y A numeric vector
-#' @param pred Numeric vecor as a result of predict.glm
+#' @param fit An object of clas glm
 #' @param labels Character
 #' @param ... further arguments to be passed to geom_col()
 #' @importFrom dplyr group_by mutate
@@ -258,13 +261,13 @@ priorPosteriorPlot=function(pred1,pred2,xlab,ylab,title,...){
 #' @examples
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' pred2=predict(fit2,type="response")
-#' riskDistributionPlot(y=ExampleData$AMD,pred=pred2)
-riskDistributionPlot=function(y,pred,labels,...){
+#' riskDistributionPlot(fit2)
+riskDistributionPlot=function(fit,labels,...){
         # y=ExampleData$AMD;pred=pred2
         # labels=c("Without outcome", "With outcome")
-    if(missing(labels)) labels=c("Without outcome", "With outcome")
-
+    if(missing(labels)) labels=paste0(names(fit$model)[1]," = ", c(0,1))
+    y=fit$y
+    pred=predict(fit,type="response")
     m <- table(y, cut(pred, seq(0,1.05, 0.05)))
     df=as.data.frame(t(m))
     names(df)=c("x","no","Freq")
@@ -289,9 +292,7 @@ riskDistributionPlot=function(y,pred,labels,...){
 
 
 #' Draw ROC curves
-#' @param data	A data.frame
-#' @param cOutcome Column number of the outcome variable.
-#' @param predrisk	Vector of predicted risk
+#' @param fit1,fit2 An object of class glm
 #' @param labels Labels given to the ROC curves.
 #' @importFrom PredictABEL plotROC
 #' @importFrom pROC roc.test roc ci
@@ -302,20 +303,23 @@ riskDistributionPlot=function(y,pred,labels,...){
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' pred1=predict(fit1,type="response")
-#' pred2=predict(fit2,type="response")
 #' labels <- c("without genetic factors", "with genetic factors")
-#' plotROC2(data=ExampleData, cOutcome=2, predrisk=cbind(pred1,pred2), labels=labels)
-plotROC2=function(data, cOutcome, predrisk, labels){
+#' plotROC2(fit1,fit2,labels=labels)
+plotROC2=function(fit1,fit2,labels){
 
     if(missing(labels)) labels <- c("Model 1", "Model 2")
     # data=ExampleData; cOutcome=2; predrisk=cbind(pred1,pred2); labels=labels
-
+    data=fit1$data
+    y=fit1$y
+    cOutcome=which(names(fit1$data)==names(fit1$model)[1])
+    pred1=predict(fit1,type="response")
+    pred2=predict(fit2,type="response")
+    predrisk=cbind(pred1,pred2)
     plotROC(data=data, cOutcome=cOutcome, predrisk=predrisk, labels=labels)
-    roc1=roc(data[[cOutcome]],predrisk[,1])
-    roc2=roc(data[[cOutcome]],predrisk[,2])
+    roc1=roc(y,pred1)
+    roc2=roc(y,pred2)
     auclabel=function(x){
-        paste0("AUC: ",round(x$auc,3),"(",round(ci(x)[1],3),"-",round(ci(x)[3],3),")") }
+        paste0("AUC: ",sprintf("%4.3f",x$auc),"(",sprintf("%4.3f",ci(x)[1]),"-",sprintf("%4.3f",ci(x)[3]),")") }
     auclabels=c(auclabel(roc1),auclabel(roc2))
 
     res=roc.test(roc1,roc2)
@@ -325,17 +329,16 @@ plotROC2=function(data, cOutcome, predrisk, labels){
     } else {
         delong=paste0(delong,"p =", round(res$p.value,3))
     }
-    text(0.7,0.25,label=delong)
-    text(0.7,0.20,label=auclabel(roc1))
-    text(0.7,0.15,label=auclabel(roc2),col="red")
+    text(0.75,0.25,label=delong)
+    text(0.75,0.20,label=auclabel(roc1))
+    text(0.75,0.15,label=auclabel(roc2),col="red")
 }
 
 
 
 
 #' Draw ROC curves
-#' @param y A numeric vector
-#' @param predlist A list of numeric vecors as results of predict.glm
+#' @param fit1,fit2 An object of class glm
 #' @param labels Character
 #' @param ... further arguments to be passed to geom_line()
 #' @importFrom purrr map2_dfr map_chr
@@ -347,14 +350,18 @@ plotROC2=function(data, cOutcome, predrisk, labels){
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' pred1=predict(fit1,type="response")
-#' pred2=predict(fit2,type="response")
 #' labels <- c("without genetic factors", "with genetic factors")
-#' ggplotROC(ExampleData$AMD,predlist=list(pred1,pred2),labels=labels)
-ggplotROC=function(y,predlist,labels,...) {
+#' ggplotROC(fit1,fit2,labels=labels)
+ggplotROC=function(fit1,fit2,labels,...) {
 
   if(missing(labels)) labels <- c("Model 1", "Model 2")
 
+  data=fit1$data
+  y=fit1$y
+  cOutcome=which(names(fit1$data)==names(fit1$model)[1])
+  pred1=predict(fit1,type="response")
+  pred2=predict(fit2,type="response")
+  predlist=list(pred1,pred2)
   count=length(predlist)
   temp=list()
   df<-predlist %>% map2_dfr(1:count,function(a,b){
@@ -365,7 +372,7 @@ ggplotROC=function(y,predlist,labels,...) {
   })
 
   auclabel=temp %>% map_chr(function(x){
-    paste0("AUC: ",round(x$auc,3),"(",round(ci(x)[1],3),"-",round(ci(x)[3],3),")")
+      paste0("AUC: ",sprintf("%4.3f",x$auc),"(",sprintf("%4.3f",ci(x)[1]),"-",sprintf("%4.3f",ci(x)[3]),")")
   })
   df2=data.frame(label=auclabel)
   df2$no=1:count
@@ -401,8 +408,7 @@ ggplotROC=function(y,predlist,labels,...) {
 
 
 #' Function for reclassification table and statistics
-#' @param y A numeric vector of outcome
-#' @param pred1,pred2 A numeric vector as a result of predict.glm
+#' @param fit1,fit2 An object of class glm
 #' @param cutoff Cutoff values for risk categories for initial model. Default value is c(0,.1,.35,1)
 #' @param cutoff2 Optional cutoff values for risk categories for updated model
 #' @importFrom Hmisc improveProb
@@ -424,12 +430,14 @@ ggplotROC=function(y,predlist,labels,...) {
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' pred1=predict(fit1,type="response")
-#' pred2=predict(fit2,type="response")
-#' result=reclassify(ExampleData$AMD,pred1,pred2)
+#' result=reclassify(fit1,fit2)
 #' result
-reclassify=function (y, pred1, pred2, cutoff,cutoff2)
+reclassify=function (fit1,fit2, cutoff,cutoff2)
 {
+
+    pred1=predict(fit1,type="response")
+    pred2=predict(fit2,type="response")
+    y=fit1$y
     if(missing(cutoff)) cutoff=c(0,.1,.35,1)
     if(missing(cutoff2)) cutoff2=cutoff
 
@@ -528,9 +536,7 @@ print.reclassified=function(x,...){
 #' form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-#' pred1=predict(fit1,type="response")
-#' pred2=predict(fit2,type="response")
-#' result=reclassify(ExampleData$AMD,pred1,pred2)
+#' result=reclassify(fit1,fit2)
 #' reclassTable(result)
 reclassTable=function(x,outcome,labels){
     if(missing(outcome)) outcome="outcome"

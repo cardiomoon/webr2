@@ -4,12 +4,10 @@
 \alias{priorPosteriorPlot}
 \title{Draw prior versus posterior plot}
 \usage{
-priorPosteriorPlot(pred1, pred2, xlab, ylab, title, ...)
+priorPosteriorPlot(fitlist, xlab, ylab, title, ...)
 }
 \arguments{
-\item{pred1}{Numeric vecor as a result of predict.glm}
-
-\item{pred2}{Numeric vecor as a result of predict.glm}
+\item{fitlist}{A list of objects of class glm}
 
 \item{xlab, ylab, title}{character}
 
@@ -23,7 +21,5 @@ form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
 form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-pred1=predict(fit1,type="response")
-pred2=predict(fit2,type="response")
-priorPosteriorPlot(pred1,pred2,alpha=0.3,color="red")
+priorPosteriorPlot(list(fit1,fit2),alpha=0.3,color="red")
 }

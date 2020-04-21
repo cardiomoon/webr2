@@ -4,12 +4,10 @@
 \alias{boxPlot2}
 \title{Draw a box plot}
 \usage{
-boxPlot2(y, pred, labels, ...)
+boxPlot2(fit, labels, ...)
 }
 \arguments{
-\item{y}{A numeric vector}
-
-\item{pred}{Numeric vecor as a result of predict.glm}
+\item{fit}{An object of class glm}
 
 \item{labels}{character optional labels}
 
@@ -24,6 +22,5 @@ Draw a box plot
 \examples{
 form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-pred2=predict(fit2,type="response")
-boxPlot2(y=ExampleData$AMD,pred=pred2)
+boxPlot2(fit2)
 }

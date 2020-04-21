@@ -4,12 +4,10 @@
 \alias{calibrationPlot}
 \title{Draw a calibration plot}
 \usage{
-calibrationPlot(y, pred, ...)
+calibrationPlot(fit, ...)
 }
 \arguments{
-\item{y}{A numeric vector}
-
-\item{pred}{Numeric vecor as a result of predict.glm}
+\item{fit}{An object of class glm}
 
 \item{...}{further arguments to be passed to geom_point()}
 }
@@ -22,6 +20,5 @@ Draw a calibration plot
 \examples{
 form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
 fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
-pred2=predict(fit2,type="response")
-calibrationPlot(y=ExampleData$AMD,pred2)
+calibrationPlot(fit2)
 }

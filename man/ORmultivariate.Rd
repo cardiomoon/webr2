@@ -20,6 +20,14 @@ A list with elements
 \description{
 Function to obtain multivariate odds ratios from a logistic regression model.
 }
+\examples{
+form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
+form2=paste0("AMD~",paste0(colnames(ExampleData)[3:16],collapse="+"))
+fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
+fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
+ORmultivariate(fit1)
+ORmultivariate(fit2)
+}
 \references{
 Suman Kundu, Yurii S. Aulchenko and A. Cecile J.W. Janssens (2020). PredictABEL: Assessment of Risk Prediction Models. R package version 1.2-4.https://CRAN.R-project.org/package=PredictABEL
 Brier GW. Verification of forecasts expressed in terms of probability. Monthly weather review 1950;78:1-3.
