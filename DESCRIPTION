@@ -24,7 +24,8 @@ Imports:
    flextable,
    officer,
    methods,
-   pROC
+   pROC,
+   MASS
 Authors@R: person("Keon-Woong", "Moon", role = c("aut", "cre"),
                      email = "cardiomoon@gmail.com")
 URL: https://github.com/cardiomoon/webr2

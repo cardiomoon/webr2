@@ -4,10 +4,12 @@
 \alias{autoTransformFit}
 \title{Fit an autotransformed linear model}
 \usage{
-autoTransformFit(fit)
+autoTransformFit(fit, vars2transform = NULL)
 }
 \arguments{
 \item{fit}{An object of class lm}
+
+\item{vars2transform}{Character vector Variable names to transform or NULL}
 }
 \description{
 Fit an autotransformed linear model
@@ -19,6 +21,9 @@ fit<- lm(EF ~ age+TG,data=acs)  ## age donot need transformation
 fit<- lm(age ~ EF+TG,data=acs)  ## age donot need transformation
 fit<- lm(EF ~ age+TG+sex+DM,data=acs)  ## age, sex donot need transformation
 result=autoTransformFit(fit)
+fit<- lm(mpg ~ hp+wt,data=mtcars)
+result=autoTransformFit(fit)
+plot(result,fill="red")
 data("autotrader",package="bestNormalize")
 autotrader$yearsold <- 2017 - autotrader$Year
 fit<- lm(price ~ mileage + yearsold+status, data = autotrader)

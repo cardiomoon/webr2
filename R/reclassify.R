@@ -9,10 +9,10 @@
 #' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
 #' fit2=glm(as.formula(form2),data=ExampleData,family=binomial)
 #' labels=c("Without Genetic Factor","With Genetic Factor")
-#' data=makePPTList_reclassfy(fit1,fit2,labels=labels)
-makePPTList_reclassfy=function(fit1,fit2,labels,cutoff=c(0,.1,.35,1),cutoff2){
+#' data=makePPTList_reclassify(fit1,fit2,labels=labels)
+makePPTList_reclassify=function(fit1,fit2,labels,cutoff=c(0,.1,.35,1),cutoff2){
 
-  # cutoff=c(0,.1,.35,1)
+   # cutoff=c(0,.1,.35,1)
   if(missing(labels)) labels=c("Initial Model","Updated Model")
   if(missing(cutoff2)) cutoff2=cutoff
 
@@ -21,11 +21,12 @@ makePPTList_reclassfy=function(fit1,fit2,labels,cutoff=c(0,.1,.35,1),cutoff2){
           "Reclassfication","Reclassfication Table",
           "Calibration Plot","Boxplot","predictPlot","priorPosteriorPlot",
           "riskDistributionPlot","ROC plot")
-
   temp=paste0("result<-reclassify(fit1,fit2, cutoff=",paste0("c(",paste0(cutoff,collapse=","),")"),
               ",cutoff2=",paste0("c(",paste0(cutoff,collapse=","),")"),");result")
-  code=c("ORmultivariate(fit1)","ORmultivariate(fit2)",
-         temp,paste0("reclassTable(result,labels=c('",paste0(labels,collapse="','"),"'))"),
+  code=c(paste0("fit1<-",fit2call(fit1),";ORmultivariate(fit1)"),
+         paste0("fit2<-",fit2call(fit2),";ORmultivariate(fit2)"),
+         temp,
+         paste0("reclassTable(result,labels=c('",paste0(labels,collapse="','"),"'))"),
          "calibrationPlot(fit2)","boxPlot2(fit2)",
          paste0("predictPlot(list(fit1,fit2),labels=c('",paste0(labels,collapse="','"),"'))"),
          "priorPosteriorPlot(list(fit1,fit2),alpha=0.3,color='red')",
@@ -33,6 +34,25 @@ makePPTList_reclassfy=function(fit1,fit2,labels,cutoff=c(0,.1,.35,1),cutoff2){
          paste0("plotROC2(fit1,fit2,labels=c('",paste0(labels,collapse="','"),"'))"))
   data.frame(title=title,type=type,code=code,stringsAsFactors = FALSE)
 
+}
+
+
+#' Get call as string from an object of class glm
+#' @param fit an obkect of class glm
+#' @export
+#' @examples
+#' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
+#' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
+#' fit2call(fit1)
+fit2call=function (fit) {
+  temp = as.character(fit$call)
+  tempcall=gsub(" ","",paste0(deparse(fit$formula),collapse = ""))
+  footer = paste0(temp[1], "(", tempcall, ",family='", temp[3],
+                  "',data=", temp[4])
+  if (length(temp) > 4)
+    footer = paste0(footer, ",offset=", temp[5])
+  footer = paste0(footer, ")")
+  footer
 }
 
 

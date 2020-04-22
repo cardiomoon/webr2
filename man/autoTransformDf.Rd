@@ -4,11 +4,17 @@
 \alias{autoTransformDf}
 \title{Autologous transformation of data.frame using bestNormalize}
 \usage{
-autoTransformDf(df)
+autoTransformDf(df, vars2transform = NULL)
 }
 \arguments{
 \item{df}{A data.frame}
+
+\item{vars2transform}{Character vector Variable names to transform or NULL}
 }
 \description{
 Autologous transformation of data.frame using bestNormalize
+}
+\examples{
+autoTransformDf(mtcars)
+res=autoTransformDf(df=mtcars)
 }
