@@ -8,6 +8,7 @@
 #' data(autotrader)
 #' fit<- lm(price ~ mileage + yearsold+status, data= autotrader )
 #' result=makePPTList_autoTransform(fit)
+#' result=makePPTList_autoTransform(fit,vars2transform=c('mileage'))
 #' result=makePPTList_autoTransform(fit,show.transformDensity=FALSE)
 #' result=makePPTList_autoTransform(fit,add.gam=FALSE)
 #' result=makePPTList_autoTransform(fit,show.transformDensity=FALSE,add.gam=FALSE)
@@ -44,10 +45,10 @@ makePPTList_autoTransform=function(fit,vars2transform=NULL,vanilla=TRUE,show.tra
     type=c(type,"Rcode")
     title=c(title,"Best Normalizing Result")
     if(is.null(vars2transform)){
-        temp="res<-autoTransformFit(fit);res$res$BN"
+        temp=paste0("res<-autoTransformFit(fit);res$res$BN")
         res<-autoTransformFit(fit)
     } else{
-        temp=paste0("res<-autoTransformFit(fit,vars2transform=c('",paste0(vars2transform,collapse="','"),"');res$res$BN")
+        temp=paste0("res<-autoTransformFit(fit,vars2transform=c('",paste0(vars2transform,collapse="','"),"'));res$res$BN")
         res<-autoTransformFit(fit,vars2transform=vars2transform)
     }
     code=c(code,temp)

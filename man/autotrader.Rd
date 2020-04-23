@@ -7,13 +7,10 @@
 \format{
 A data frame with 6283 rows and 11 variables:
 \describe{
-  \item{price}{price, in US dollars}
   \item{Car_Info}{Raw description from website}
-  \item{Link}{hyperlink to listing (must be appended to https://www.autotrader.com/)}
   \item{Make}{Car manufacturer}
   \item{Year}{Year car manufactured}
-  \item{Location}{Location of listing}
-  \item{Radius}{Radius chosen for search}
+  \item{price}{price, in US dollars}
   \item{mileage}{mileage on vehicle}
   \item{status}{used/certified}
   \item{model}{make and model, separated by space}
