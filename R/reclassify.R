@@ -37,21 +37,28 @@ makePPTList_reclassify=function(fit1,fit2,labels,cutoff=c(0,.1,.35,1),cutoff2){
 }
 
 
-#' Get call as string from an object of class glm
+#' Get call as string from an object of class glm or lm
 #' @param fit an obkect of class glm
 #' @export
 #' @examples
 #' form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
-#' fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
-#' fit2call(fit1)
+#' fit=glm(as.formula(form1),data=ExampleData,family=binomial)
+#' fit2call(fit)
+#' fit<- lm(mpg~hp*wt,data=mtcars)
+#' fit2call(fit)
 fit2call=function (fit) {
   temp = as.character(fit$call)
+
+  if("glm" %in% class(fit)){
   tempcall=gsub(" ","",paste0(deparse(fit$formula),collapse = ""))
   footer = paste0(temp[1], "(", tempcall, ",family='", temp[3],
                   "',data=", temp[4])
-  if (length(temp) > 4)
-    footer = paste0(footer, ",offset=", temp[5])
+  if (length(temp) > 4) footer = paste0(footer, ",offset=", temp[5])
   footer = paste0(footer, ")")
+  footer
+  } else if("lm" %in% class(fit)){
+     footer = paste0(temp[1], "(", temp[2],",data=", temp[3],")")
+  }
   footer
 }
 

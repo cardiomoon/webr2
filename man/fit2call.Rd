@@ -2,7 +2,7 @@
 % Please edit documentation in R/reclassify.R
 \name{fit2call}
 \alias{fit2call}
-\title{Get call as string from an object of class glm}
+\title{Get call as string from an object of class glm or lm}
 \usage{
 fit2call(fit)
 }
@@ -10,10 +10,12 @@ fit2call(fit)
 \item{fit}{an obkect of class glm}
 }
 \description{
-Get call as string from an object of class glm
+Get call as string from an object of class glm or lm
 }
 \examples{
 form1=paste0("AMD~",paste0(colnames(ExampleData)[3:10],collapse="+"))
-fit1=glm(as.formula(form1),data=ExampleData,family=binomial)
-fit2call(fit1)
+fit=glm(as.formula(form1),data=ExampleData,family=binomial)
+fit2call(fit)
+fit<- lm(mpg~hp*wt,data=mtcars)
+fit2call(fit)
 }

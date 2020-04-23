@@ -24,8 +24,7 @@ result=autoTransformFit(fit)
 fit<- lm(mpg ~ hp+wt+hp:wt+am,data=mtcars)
 result=autoTransformFit(fit)
 plot(result,fill="red")
-data("autotrader",package="bestNormalize")
-autotrader$yearsold <- 2017 - autotrader$Year
+data(autotrader)
 fit<- lm(price ~ mileage + yearsold+status, data = autotrader)
 result=autoTransformFit(fit)
 }

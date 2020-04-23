@@ -32,7 +32,7 @@ autoTransformDf=function(df,vars2transform=NULL){
   }
   for(i in 1:length(res)){
     if(res[i]){
-      BN[[names(df)[i]]]=bestNormalize(df[[i]], r = 1, k = 5, warn = F)
+      BN[[names(df)[i]]]=bestNormalize(df[[i]],  r = 1, k = 5, warn = F)
       df2[[names(df)[i]]]=seq(min(df[[i]],na.rm=TRUE),max(df[[i]],na.rm=TRUE),length.out=100)
       df[[paste0(names(df)[i],".t")]]=BN[[names(df)[i]]]$x.t
     }else{
@@ -68,12 +68,13 @@ plot.BNdf=function(x,...){
 #' Plot function for an object of class BNdf
 #' @param x An object of class BNdf
 #' @param select Choices of BN to plot
-#' @importFrom graphics par plot
+#' @importFrom graphics par plot legend lines
 #' @export
 #' @examples
 #' x=autoTransformDf(iris)
 #' plot_BNdf(x)
 plot_BNdf=function(x,select=NULL){
+    # select=NULL
     no=length(x$BN)
     if(is.null(select)) select=1:no
     if(length(select)>1){
@@ -81,7 +82,27 @@ plot_BNdf=function(x,select=NULL){
       par(mfrow=c(2,ncol))
     }
     for(i in 1:length(select)){
+           if(length(x$BN[[select[i]]]$x)>100){
+              tempx=x$BN[[select[i]]]$x
+              newx=seq(min(tempx,na.rm=TRUE),max(tempx,na.rm=TRUE),length.out = 100)
+              yy <- predict(x$BN[[select[i]]], newdata = newx, warn = FALSE)
+              methods <- c(names(x$BN[[select[i]]]$other_transforms))
+              ys <- lapply(x$BN[[select[i]]]$other_transforms, function(obj) {
+                predict(obj, newdata = newx,warn = F)
+              })
+              cols <- 1:(length(methods) + 1)
+              plot(newx, yy, ylim = range(yy, ys, na.rm = TRUE), xlim = range(newx),
+                   type = "l", col = cols[1], lwd = 2, xlab = "x",ylab =  "g(x)",
+                   main=names(x$BN)[select[i]])
+              lapply(1:length(ys), function(i) {
+                lines(newx, ys[[i]], col = cols[i + 1], lwd = 2)
+              })
+              labs <- c(class(x$BN[[select[i]]]$chosen_transform)[1], methods)
+              legend("top", labs, col = cols, bty = "n", lwd = 2)
+
+           } else{
            plot(x$BN[[select[i]]],main=names(x$BN)[select[i]])
+           }
     }
     if(length(select)>1){
       par(mfrow=c(1,1))
@@ -184,12 +205,11 @@ plot_BNdf4=function(x,select=NULL){
 #' fit<- lm(mpg ~ hp+wt+hp:wt+am,data=mtcars)
 #' result=autoTransformFit(fit)
 #' plot(result,fill="red")
-#' data("autotrader",package="bestNormalize")
-#' autotrader$yearsold <- 2017 - autotrader$Year
+#' data(autotrader)
 #' fit<- lm(price ~ mileage + yearsold+status, data = autotrader)
 #' result=autoTransformFit(fit)
 autoTransformFit=function(fit,vars2transform=NULL){
-   # vars2transform=NULL
+    # vars2transform=NULL
   df=fit$model
   yvar=names(fit$model)[1]
   xvars=names(fit$model)[-1]
