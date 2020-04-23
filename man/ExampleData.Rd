@@ -3,8 +3,7 @@
 \docType{data}
 \name{ExampleData}
 \alias{ExampleData}
-\title{A hypothetical dataset that is used to demonstrate all functions.
-ExampleData is a hypothetical dataset constructed to demonstrate all functions in the package. ExampleData is a data frame containing a binary outcome variable (e.g., disease present/absent) and genetic and non-genetic predictor variables for 10,000 persons. In this dataset, column 1 is the ID number, column 2 is the outcome variable, columns 3-10 are non-genetic variables and columns 11-16 are genetic variables.}
+\title{A hypothetical dataset that is used to demonstrate all functions.}
 \format{
 An object of class \code{data.frame} with 10000 rows and 16 columns.
 }
@@ -12,7 +11,6 @@ An object of class \code{data.frame} with 10000 rows and 16 columns.
 ExampleData
 }
 \description{
-A hypothetical dataset that is used to demonstrate all functions.
 ExampleData is a hypothetical dataset constructed to demonstrate all functions in the package. ExampleData is a data frame containing a binary outcome variable (e.g., disease present/absent) and genetic and non-genetic predictor variables for 10,000 persons. In this dataset, column 1 is the ID number, column 2 is the outcome variable, columns 3-10 are non-genetic variables and columns 11-16 are genetic variables.
 }
 \examples{

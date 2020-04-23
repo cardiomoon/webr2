@@ -3,8 +3,7 @@
 \docType{data}
 \name{autotrader}
 \alias{autotrader}
-\title{Prices of 6,283 cars listed on Autotrader
-A dataset containing the prices and other attributes of over 6000 cars in the Minneapolis area}
+\title{Prices of 6,283 cars listed on Autotrader}
 \format{
 A data frame with 6283 rows and 11 variables:
 \describe{
@@ -23,6 +22,7 @@ A data frame with 6283 rows and 11 variables:
 }
 \source{
 \url{https://www.autotrader.com/}
+
 Suman Kundu, Yurii S. Aulchenko and A. Cecile J.W. Janssens (2020). PredictABEL:Assessment of Risk Prediction Models. R package version 1.2-4.
 https://CRAN.R-project.org/package=PredictABEL
 }
@@ -30,7 +30,6 @@ https://CRAN.R-project.org/package=PredictABEL
 autotrader
 }
 \description{
-Prices of 6,283 cars listed on Autotrader
 A dataset containing the prices and other attributes of over 6000 cars in the Minneapolis area
 }
 \keyword{datasets}
