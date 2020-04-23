@@ -4,7 +4,7 @@
 \alias{plot_autoBN}
 \title{Plot an object of class autoBN}
 \usage{
-plot_autoBN(x, add.gam, show.point, by, select, ...)
+plot_autoBN(x, add.gam, show.point, by, select, interactive = FALSE, ...)
 }
 \arguments{
 \item{x}{An object of calss autoBN}
@@ -16,6 +16,8 @@ plot_autoBN(x, add.gam, show.point, by, select, ...)
 \item{by}{Optional name of categorical variable}
 
 \item{select}{Numeric Plot choices}
+
+\item{interactive}{logical If true, make a interactive plot}
 
 \item{...}{Further arguments to be passed to geom_ribbon}
 }

@@ -181,7 +181,7 @@ plot_BNdf4=function(x,select=NULL){
 #' fit<- lm(age ~ EF+TG,data=acs)  ## age donot need transformation
 #' fit<- lm(EF ~ age+TG+sex+DM,data=acs)  ## age, sex donot need transformation
 #' result=autoTransformFit(fit)
-#' fit<- lm(mpg ~ hp+wt,data=mtcars)
+#' fit<- lm(mpg ~ hp+wt+hp:wt+am,data=mtcars)
 #' result=autoTransformFit(fit)
 #' plot(result,fill="red")
 #' data("autotrader",package="bestNormalize")
@@ -189,7 +189,7 @@ plot_BNdf4=function(x,select=NULL){
 #' fit<- lm(price ~ mileage + yearsold+status, data = autotrader)
 #' result=autoTransformFit(fit)
 autoTransformFit=function(fit,vars2transform=NULL){
-  # vars2transform=NULL
+   # vars2transform=NULL
   df=fit$model
   yvar=names(fit$model)[1]
   xvars=names(fit$model)[-1]
@@ -211,25 +211,37 @@ autoTransformFit=function(fit,vars2transform=NULL){
       }
     }
   }
-
+   gamstr
     gamstr=gsub(" ","",gamstr)
     var=unlist(strsplit(gamstr,"~"))[2]
+    var
     var=unlist(strsplit(var,"\\+"))
     tevar=var[grepl("\\*",var)]
-    tevar
-    gsub("*",",",tevar,fixed=TRUE)
-    paste0("te(",gsub("*",",",tevar,fixed=TRUE),")")
-    xvar=var[!grepl("\\*",var)]
+   tevar
     if(length(tevar)>0){
-         gamstr=gsub(tevar,paste0("te(",gsub("*",",",tevar,fixed=TRUE),")"),gamstr,fixed=TRUE)
+         tevar=gsub(tevar,paste0("te(",gsub("*",",",tevar,fixed=TRUE),")"),tevar,fixed=TRUE)
     }
+    xvar=var[!grepl("\\*",var)]
+    xvar
+    tivar=var[grepl("\\:",xvar)]
+    tivar
+    if(length(tivar)>0){
+      gamstr=gsub(tivar,paste0("ti(",gsub(":",",",tivar,fixed=TRUE),")"),gamstr,fixed=TRUE)
+    }
+    xvar=var[!grepl("\\:",xvar)]
+    xvar
     if(length(xvar)>0){
       for(i in seq_along(xvar)){
       if(is.numeric(res$dfnew[[xvar[i]]])){
-      gamstr=gsub(xvar[i],paste0("s(",xvar[i],")"),gamstr)
+        xvar=gsub(xvar[1],paste0("s(",xvar[1],")"),xvar)
+      # gamstr=gsub(xvar[i],paste0("s(",xvar[i],")"),gamstr)
+      }
       }
     }
-  }
+    tevar
+    tivar
+    xvar
+  gamstr=paste0(yvar,"~",paste0(c(tevar,tivar,xvar),collapse="+"))
   gamstr
   newfit=eval(parse(text=paste0("lm(",callstr,",data=df)")))
   gamfit=gam(as.formula(gamstr),data=df,method="REML")
@@ -402,10 +414,12 @@ plot.autoBN=function(x,...){
 #' @param show.point logical Whether or not show point
 #' @param by Optional name of categorical variable
 #' @param select Numeric Plot choices
+#' @param interactive logical If true, make a interactive plot
 #' @param ... Further arguments to be passed to geom_ribbon
-#' @importFrom ggplot2 geom_pointrange geom_jitter
+#' @importFrom ggplot2 geom_pointrange
+#' @importFrom ggiraph geom_point_interactive geom_jitter_interactive
 #' @export
-plot_autoBN=function(x,add.gam,show.point,by,select,...){
+plot_autoBN=function(x,add.gam,show.point,by,select,interactive=FALSE,...){
 
        # add.gam=TRUE;show.point=TRUE;by=NULL;select=NULL
        # byvar="status"
@@ -433,6 +447,7 @@ plot_autoBN=function(x,add.gam,show.point,by,select,...){
     for(i in 1:count){
        df=x$pdata[[i]]
        df
+
        if(!add.gam) df=df[df$method!="gam fit",]
 
        if(is.numeric(df$x)){
@@ -442,7 +457,11 @@ plot_autoBN=function(x,add.gam,show.point,by,select,...){
 
 
          p[[i]]<-ggplot(data=df,aes_string(x="x",y="y"))
-         if(show.point) p[[i]]<-p[[i]]+geom_point(data=x$fit$model,aes_string(x=xvars[i],y=yvar),alpha=0.1)
+         if(show.point) {
+           df2=x$fit$model
+           df2$tooltip=rownames(df2)
+           p[[i]]<-p[[i]]+geom_point_interactive(data=df2,aes_string(x=xvars[i],y=yvar,tooltip="tooltip",data_id="tooltip"),alpha=0.1)
+         }
 
          p[[i]]<-p[[i]]+ geom_line(data=df,aes_string(color=colorvar[1]))+labs(x=xvars[i],y=yvar)
 
@@ -464,7 +483,9 @@ plot_autoBN=function(x,add.gam,show.point,by,select,...){
 
          p[[i]]=ggplot(data=df,aes_string(x="x",y="y"))
          if(show.point){
-           p[[i]]=p[[i]]+ geom_jitter(data=x$fit$model,aes_string(x=xvars[i],y=yvar),width=0.2,alpha=0.1)
+           df2=x$fit$model
+           df2$tooltip=rownames(df2)
+           p[[i]]=p[[i]]+ geom_jitter_interactive(data=df2,aes_string(x=xvars[i],y=yvar,tooltip="tooltip",data_id="tooltip"),width=0.2,alpha=0.1)
            # geom_boxplot(data=fit$model,aes_string(x=temp2,y=yvar,fill=colorvar),alpha=0.1,
            #              width=0.2,
            #              position=position_dodge(0.9))
@@ -486,7 +507,15 @@ plot_autoBN=function(x,add.gam,show.point,by,select,...){
     }
 
     if(!missing(select)) p=p[select]
-    if(!is.null(byvar)&(add.gam)) cowplot::plot_grid(plotlist=p)
-    else  reduce(p,`+`)
+    if(!is.null(byvar)&(add.gam)) p<-cowplot::plot_grid(plotlist=p)
+    else  p<-reduce(p,`+`)
+
+
+      if(interactive){
+        girafe(code=print(p),options = list(opts_hover(css = "fill:red;r:3pt;"),opts_tooltip(offx = 10, offy = 10)))
+      } else{
+        p
+      }
+
 }
 
