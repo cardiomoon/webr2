@@ -6,21 +6,21 @@
 #' @export
 #' @examples
 #' data(autotrader)
-#' fit<- lm(price ~ mileage + yearsold+status, data= autotrader )
+#' fit<- lm(price ~ mileage + yearsold +status, data= autotrader )
 #' result=makePPTList_autoTransform(fit)
 #' result=makePPTList_autoTransform(fit,vars2transform=c('mileage'))
 #' result=makePPTList_autoTransform(fit,show.transformDensity=FALSE)
 #' result=makePPTList_autoTransform(fit,add.gam=FALSE)
 #' result=makePPTList_autoTransform(fit,show.transformDensity=FALSE,add.gam=FALSE)
 makePPTList_autoTransform=function(fit,vars2transform=NULL,vanilla=TRUE,show.transformDensity=TRUE,add.gam=TRUE){
-    # vars2transform=NULL
+     # vars2transform=NULL;vanilla=TRUE;show.transformDensity=TRUE;add.gam=TRUE
     temp=fit2call(fit)
     type="Rcode"
     title="Original Linear model"
     code=paste0("fit=",temp,";fit")
-    type=c(type,"table")
+    type=c(type,"Rcode")
     title=c(title,"Summary of Original Linear model")
-    code=c(code,paste0("lmTable(fit,vanilla=",vanilla,")"))
+    code=c(code,"summary(fit)")
     type=c(type,"ggplot")
     title=c(title,"Prediction with Original Linear model")
     code=c(code,"predictModel(fit,alpha=0.05)")
@@ -28,10 +28,11 @@ makePPTList_autoTransform=function(fit,vars2transform=NULL,vanilla=TRUE,show.tra
     if(show.transformDensity){
     if(is.null(vars2transform)){
         result=which(unlist(lapply(fit$model,needTransform)))
+        result
         for(i in seq_along(result)){
             type=c(type,"ggplot")
             title=c(title,paste0("Best Normalizing Transformation of ",names(result)[i]))
-            code=c(code,paste0("transformDensity(fit$model[[",i,"]],best=TRUE)"))
+            code=c(code,paste0("transformDensity(fit$model[[",result[i],"]],best=TRUE)"))
         }
     } else{
         for(i in seq_along(vars2transform)){
@@ -58,9 +59,9 @@ makePPTList_autoTransform=function(fit,vars2transform=NULL,vanilla=TRUE,show.tra
             "Best Normalizing transformation")
     code=c(code,"plot_BNdf(res$res)","plot_BNdf2(res$res)","plot_BNdf3(res$res)","plot_BNdf4(res$res)")
 
-    type=c(type,"table","ggplot")
+    type=c(type,"Rcode","ggplot")
     title=c(title,"Summary of Transformed Linear Model","Prediction with Transformed Linear model")
-    code=c(code,paste0("lmTable(res$newfit,vanilla=",vanilla,")"),"predictModel(res$newfit,alpha=0.05)")
+    code=c(code,"summary(res$newfit)","predictModel(res$newfit,alpha=0.05)")
 
     if(add.gam){
     type=c(type,"Rcode","ggplot")

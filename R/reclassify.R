@@ -580,7 +580,7 @@ reclassTable=function(x,outcome,labels){
     ft<-width(ft,j=space1+1,width=0.6)
 
     y=x$NRIcat
-    values=paste0("Net reclassification improvement :",round(y[1]*100,1),"% (95% CI :",
+    values=paste0("Net reclassification improvement(cat) :",round(y[1]*100,1),"% (95% CI :",
                   round(y[2]*100, 1), "-", round(y[3]*100, 1),"); p ")
 
     if(y[4]<0.001) {
@@ -589,6 +589,16 @@ reclassTable=function(x,outcome,labels){
         values=paste0(values,"=", round(y[4],3))
     }
     ft<-add_footer_row(ft,values=values,colwidths=space1+1)
+    y=x$NRIcont
+    values=paste0("Net reclassification improvement(cont) :",round(y[1]*100,1),"% (95% CI :",
+                  round(y[2]*100, 1), "-", round(y[3]*100, 1),"); p ")
+
+    if(y[4]<0.001) {
+      values=paste0(values,"< .001")
+    } else {
+      values=paste0(values,"=", round(y[4],3))
+    }
+    ft<-add_footer_row(ft,top=FALSE,values=values,colwidths=space1+1)
     ft<-align(ft,align="center",part="header")
     y=x$IDI
     values=paste0("Integrated discrimination improvement :",round(y[1]*100,1),"% (95% CI :",

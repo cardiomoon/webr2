@@ -26,7 +26,7 @@ Make Powerpoint list for autoTransformFit
 }
 \examples{
 data(autotrader)
-fit<- lm(price ~ mileage + yearsold+status, data= autotrader )
+fit<- lm(price ~ mileage + yearsold +status, data= autotrader )
 result=makePPTList_autoTransform(fit)
 result=makePPTList_autoTransform(fit,vars2transform=c('mileage'))
 result=makePPTList_autoTransform(fit,show.transformDensity=FALSE)

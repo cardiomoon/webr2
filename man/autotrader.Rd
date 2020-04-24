@@ -9,12 +9,12 @@ A data frame with 6283 rows and 11 variables:
 \describe{
   \item{Car_Info}{Raw description from website}
   \item{Make}{Car manufacturer}
+  \item{model}{make and model, separated by space}
   \item{Year}{Year car manufactured}
   \item{price}{price, in US dollars}
   \item{mileage}{mileage on vehicle}
-  \item{status}{used/certified}
-  \item{model}{make and model, separated by space}
   \item{yearsold}{2017 - autotrader$Year}
+  \item{status}{used/certified}
 }
 }
 \source{
